@@ -3,13 +3,12 @@
 
 ## Command-line parameter description
 
-For each human filtering tool(-t) from the list run 
-filtering on all FASTQ from list of test cases(-i) and
-save output(-0):
+For each human filtering tool `-t ` run 
+filtering on all samples  `-s` and
+save output `-o`:
 
 ```bash
-anti_human -i samples.dat -t tools.dat -o results.dat
-
+anti_human.py -s samples.dat -t tools.dat -o results.dat
 ```
 
 ## Input files description
