@@ -73,3 +73,13 @@ Creates tab-delimited file with the following field:
 ```
 
 
+## Development
+ 
+To add new human filtering tool, add entry to `toolname_to_runner` dictionary
+and implement class that has `extract_human_reads` method for a FASTQ sample file.
+
+
+
+## Testing
+
+To test program run nosetests from directory where README.md is located.
