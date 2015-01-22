@@ -35,3 +35,23 @@ class  Test_Samples(unittest.TestCase):
         self.assertEqual(len(samples), 2)
         self.assertEqual(samples[0], ("name1", "fastq1", "annotation1"))
         self.assertEqual(samples[1], ("name2", "fastq2", "annotation2"))
+
+class  Test_Annotations(unittest.TestCase):
+    
+    def test_empty_file(self):
+        self.assertRaises(IOError, parser.parse_annotation, StringIO(""))
+
+    def test_incorrect_number_of_columns(self):
+        self.assertRaises(IOError, parser.parse_annotation, StringIO("read1\n"))
+
+    def test_incorrect_description_for_human(self):
+        self.assertRaises(IOError, parser.parse_annotation, StringIO("read1\tShouldBe[YN]\n"))
+
+    def test_valid_file(self):
+        read_annotation = parser.parse_annotation(
+            StringIO("read1\tY\nread2\tY\nread3\tN\n"))
+        self.assertEqual(len(read_annotation), 3)
+        self.assertEqual(read_annotation[0], ("read1", "Y"))
+        self.assertEqual(read_annotation[1], ("read2", "Y"))
+        self.assertEqual(read_annotation[2], ("read3", "N"))
+

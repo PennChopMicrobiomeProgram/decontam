@@ -22,15 +22,18 @@ def parse_tool_names(tool_file_handle):
         raise IOError("empty tool file")
     return tools
 
+
 def check_file_exists(label, file_name):
     if not os.path.isfile(file_name): 
         raise IOError(label + "file :" + file_name + 
             "does not exist. Check file name or remove it from sample file.")
 
+
 def check_number_of_rows(row, num_description_for_sample):
     if len(row) != num_description_for_sample:
         raise IOError("each sample should have " + str(num_description_for_sample) +
             " columns: sample_name fastq annotation") 
+
 
 def parse_samples(samples_file_handle):
     """ parses file with list of test cases. 
@@ -58,3 +61,32 @@ def parse_samples(samples_file_handle):
     if not samples:
         raise IOError("empty sample file") 
     return samples
+
+
+def parse_annotation(annotation_file_handle):
+    """
+    parses file with annotation for each read.
+
+    Tab-delimete file format is: read_identifier isHuman
+    where read_identifier coresponds to identifier from corresponding fastq
+    and isHuman = Y|N
+   
+    raises IOError if cannot parse file 
+    """
+    read_annotation = []
+    reader = csv.reader(annotation_file_handle, delimiter="\t")
+    human_column_valid_values = ["Y", "N"]
+    for row in reader:
+        if len(row) != 2:
+            raise IOError("annotation file should have 2 columns: read_id and (Y if read is human, N otherwise).")
+        read_id = row[0]
+        is_human = row[1]
+        if not is_human in human_column_valid_values:
+            raise IOError("2nd column should be equal to 'Y' or 'N'.")
+        read_annotation.append( (read_id, is_human) )
+    if not read_annotation:
+        raise IOError("empty annotation file")
+    return read_annotation
+
+
+    
