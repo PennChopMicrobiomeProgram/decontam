@@ -31,6 +31,8 @@ bmtagger
 Here is list of tools supported:
 
 1. bmtagger
+2. all_human 
+3. none_human
 
 ### Test cases
 
@@ -75,11 +77,11 @@ Creates tab-delimited file with the following field:
 
 ## Development
  
-To add new human filtering tool, add entry to `toolname_to_runner` dictionary
-and implement class that has `extract_human_reads` method for a FASTQ sample file.
+To add new human filtering tool, add entry to `toolname\_to\_runner` dictionary
+and implement class that has `extract\_human\_reads` method for a FASTQ sample file.
 
 
 
 ## Testing
 
-To test program run nosetests from directory where README.md is located.
+To test program run `nosetests` from directory where README.md is located.
