@@ -1,4 +1,4 @@
-# Compare different tools for filtering out human reads
+# Run different tools for filtering out human reads
 
 
 ## Command-line parameter description
@@ -14,10 +14,8 @@ anti_human.py -s samples.dat -t tools.dat -o results.dat
 ## Input files description
 
 * tools file with list of tools for testing
-* samples file with list of test cases, each case is a 
-pair of FASTQ and annotation file for reads
-* fastq files 
-* annotation files for each fastq file
+* samples file with list of samples, each sample is a FASTQ file
+
 
 ### Tools file
 
@@ -33,45 +31,31 @@ Here is list of tools supported:
 1. bmtagger
 2. all_human 
 3. none_human
+4. bwa
+5. bowtie2
+6. blat
 
-### Test cases
+### Samples file
 
-Main input file list all of the test cases. Each test
-case is a pair of FASTQ file and annotation file. The format is 
-tab delimited with three columns name of the test case, FASTQ file
-and annotation file:
+Main input file list all of the samples. Each sample
+is a pair of name and FASTQ file. The format is 
+tab delimited with ??? columns name, FASTQ file :
 
 ```R
-sample_name1    example1.fastq   read_annotation_for_example1.dat
-sample_name2    example2.fastq   read_annotation_for_example2.dat
+sample_name1    example1.fastq
+sample_name2    example2.fastq
 ...
-sample_nameM    exampleM.fastq   read_annotation_for_exampleM.dat
+sample_nameM    exampleM.fastq
 ```
 
 Each FASTQ file has reads from simulated or real dataset.
-
-## Annotation file
-
-Annotation file annotate each read from a FASTQ file. The format is
-tab delimited with columns:
-
-```R
-#readId    isHumanRead
-read_id1    Y
-read_id2    N
-...
-read_idK    N
-```
-
-Header line is optional. All ids should match to ids from the corresponding 
-FASTQ file.
 
 ## Output file
 
 Creates tab-delimited file with the following field:
 
 ```R
-#sample\_name   tool    TruePositive TrueNegative FalsePositive FalseNegative ...
+#tool\_name    sample\_name   read\_id is\_human\_prediction
 ```
 
 
