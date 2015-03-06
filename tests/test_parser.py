@@ -55,3 +55,7 @@ class  Test_Annotations(unittest.TestCase):
         self.assertEqual(read_annotation[1], ("read2", "Y"))
         self.assertEqual(read_annotation[2], ("read3", "N"))
 
+class Test_Reads(unittest.TestCase):
+
+    def test_reads(self):
+        self.assertTrue(False)

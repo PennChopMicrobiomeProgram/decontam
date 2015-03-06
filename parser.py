@@ -11,8 +11,10 @@ def parse_tool_names(tool_file_handle):
         tool2
         ...
         
-        return list with tool names
-        raises IOError if cannot parse file
+        Returns:
+             list with tool names
+        Raises:
+             IOError if cannot parse file
     """
     tools = []
     for line in tool_file_handle:
@@ -40,12 +42,15 @@ def parse_samples(samples_file_handle):
 
     Each test case has name, FASTQ and annotation(for each read from FASTQ).
 
-    return list of tuples, each element of the list is a test case, 
-    each test case is a tuple(1st element sample name, 2nd fastq file, 3rd annotation file)
+    Returns:
+        list of tuples, each element of the list is a test case, 
+        each test case is a tuple
+        (1st element sample name, 2nd fastq file, 3rd annotation file)
 
-    raises exception if cannot parse file
-    raises exception if cannot find fastq file
-    raises exception if cannot find annotation file
+    Raises: 
+        IOError if cannot parse file
+        IOError if cannot find fastq file
+        IOError if cannot find annotation file
     """
     num_description_for_sample = 3 # name fastq annotation
     samples = []
@@ -64,14 +69,20 @@ def parse_samples(samples_file_handle):
 
 
 def parse_annotation(annotation_file_handle):
-    """
-    parses file with annotation for each read.
+    """ parses file with annotation for each read.
 
-    Tab-delimete file format is: read_identifier isHuman
+    Tab-delimeted file format is: read_identifier isHuman
     where read_identifier coresponds to identifier from corresponding fastq
     and isHuman = Y|N
+
+    Returns:
+        list of tuples, each tuple has read identifier and human 
+        annotation(Y for human, N for nonhuman). 
+
+        Number of elements of the list equal to number of annotated reads.
    
-    raises IOError if cannot parse file 
+    Raises:
+         IOError if cannot parse file 
     """
     read_annotation = []
     reader = csv.reader(annotation_file_handle, delimiter="\t")
@@ -88,5 +99,13 @@ def parse_annotation(annotation_file_handle):
         raise IOError("empty annotation file")
     return read_annotation
 
-
+def parse_read_ids(fastq_file_handle):
+    """ for a given fastq find all identifiers.
     
+    Returns:
+        set of ids.
+    """
+    raise NotImplementedError("parse_read_ids")
+
+   
+ 
