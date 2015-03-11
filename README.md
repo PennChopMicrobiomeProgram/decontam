@@ -7,13 +7,16 @@ filtering on all samples  `-s` and
 save output `-o`:
 
 ```bash
-anti _ human.py -s samples.dat -t tools.dat -o results.dat
+anti _ human.py -s samples _ short.dat -t tools.dat -o results.dat
 ```
 
 ## Input files description
 
 * *tools* file with list of tools for testing
 * *samples* file with list of samples, each sample is a paired-end run with 2 FASTQ files.
+
+File 'parameters.json' has parameters for different tools. Each section should have the same
+name as tool name.
 
 
 ### Tools file
@@ -28,11 +31,11 @@ bmtagger
 Here is list of tools supported:
 
 1. bmtagger
-2. all _ human 
-3. none _ human
-4. bwa
-5. bowtie2
-6. blat
+2. all _ human (not yet implemented)
+3. none _ human(not yet implemented)
+4. bwa(not yet implemented)
+5. bowtie2(not yet implemented)
+6. blat(not yet implemented)
 
 ### Samples file
 
@@ -61,9 +64,11 @@ Creates tab-delimited file with the following field:
 
 ## Development
  
-To add new human filtering tool, add entry to `toolname _ to _ runner` dictionary
-and implement class that has `extract _ human _ reads` method for a FASTQ sample file.
-
+To add new human filtering tool, add entry to `toolname _ avalable` list
+and implement class that has:
+* `extract _ human _ reads` method for a paired-end FASTQ sample file
+* attribute `name`
+* ` _ _ init _ _ ` that has one dictionary as argument for parameter specification
 
 
 ## Testing
