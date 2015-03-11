@@ -7,7 +7,7 @@ filtering on all samples  `-s` and
 save output `-o`:
 
 ```bash
-anti _ human.py -s samples _ short.dat -t tools.dat -o results.dat
+anti_human.py -s samples_short.dat -t tools.dat -o results.dat
 ```
 
 ## Input files description
