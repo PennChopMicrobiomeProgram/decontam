@@ -44,10 +44,10 @@ is a pair of name and FASTQ file. The format is
 tab delimited with 3  columns(name, forward FASTQ file, reverse FASTQ file):
 
 ```R
-sample _ name1    example1 _ R1.fastq    example1 _ R2.fastq
-sample _ name2    example2 _ R1.fastq    example2 _ R2.fastq
-...                                                    
-sample _ nameM    exampleM _ R1.fastq    exampleM _ R2.fastq
+sample_name1    example1_R1.fastq    example1_R2.fastq
+sample_name2    example2_R1.fastq    example2_R2.fastq
+...                                              
+sample_nameM    exampleM_R1.fastq    exampleM_R2.fastq
 ```
 
 Each pair of FASTQ files have reads from simulated or real dataset.
@@ -58,7 +58,7 @@ The pair of forward and reverse fastq files for a sample should have the same re
 Creates tab-delimited file with the following field:
 
 ```R
-#tool _ name    sample _ name   read _ id is _ human _  prediction
+#tool_name    sample_name   read_id is_human_prediction
 ```
 
 
@@ -66,9 +66,9 @@ Creates tab-delimited file with the following field:
  
 To add new human filtering tool, add entry to `toolname _ avalable` list
 and implement class that has:
-* `extract _ human _ reads` method for a paired-end FASTQ sample file
+* `extract_human_reads` method for a paired-end FASTQ sample file
 * attribute `name`
-* ` _ _ init _ _ ` that has one dictionary as argument for parameter specification
+* `__init__` that has one dictionary as argument for parameter specification
 
 
 ## Testing
