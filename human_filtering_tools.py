@@ -2,6 +2,8 @@ import csv
 import tempfile
 import subprocess
 
+import utils
+
 class Bmtagger:
 
     name = "bmtagger"
@@ -76,18 +78,21 @@ class All_human:
     def __init__(self, params):
         pass
 
-    def get_human_annotation(self, fastq):
-        pass
+    def get_human_annotation(self, R1, R2):
+        ids = utils.parse_read_ids(R1)
+	return [(id, 1) for id in ids]
 
 class Random_human:
 
     name = "random_human"
 
     def __init__(self, params):
-        pass
+	assert 0.0 <= params.percent_human <= 100.0
+        self.fraction_human = params.percent_human/100.0
 
-    def get_human_annotation(self, fastq):
-        pass
+    def get_human_annotation(self, R1, R2):
+        ids = utils.parse_read_ids(R1)
+	return [(id, 1 if random.random() <= self.fraction_human else 0) for id in ids]
 
 class None_human:
 
@@ -96,8 +101,9 @@ class None_human:
     def __init__(self, params):
         pass
 
-    def get_human_annotation(self, fastq):
-        pass
+    def get_human_annotation(self, R1, R2):
+        ids = utils.parse_read_ids(R1)
+	return [(id, 0) for id in ids]
 
 
 
