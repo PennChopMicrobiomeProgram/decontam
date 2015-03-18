@@ -65,7 +65,7 @@ tool_name    sample_name   read_id is_human_prediction
 
 ## Development
  
-To add new human filtering tool, add entry to `toolname _ avalable` list
+To add new human filtering tool, add entry to `tools _ avalable` list
 and implement class that has:
 * `extract_human_reads` method for a paired-end FASTQ sample file
 * attribute `name`
