@@ -1,4 +1,5 @@
 import json
+import sys
 
 from human_filtering_tools import Bmtagger
 from human_filtering_tools import All_human
@@ -31,7 +32,13 @@ def get_parameters_for_tools(path_to_parameter_file="parameters.json"):
     Raises:
         IOError if cannot find or parse file. 
     """
-    params = json.load(open(path_to_parameter_file))
+    try:
+        params = json.load(open(path_to_parameter_file))
+    except ValueError, message:
+        print "cannot parse file " + path_to_parameter_file
+        print "check for format of the file."
+        print "Error message: " + str(message)
+        sys.exit(1)
     return params
 
 

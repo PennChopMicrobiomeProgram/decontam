@@ -1,6 +1,7 @@
 import csv
 import tempfile
 import subprocess
+import random
 
 import utils
 
@@ -87,8 +88,8 @@ class Random_human:
     name = "random_human"
 
     def __init__(self, params):
-	assert 0.0 <= params.percent_human <= 100.0
-        self.fraction_human = params.percent_human/100.0
+	assert 0.0 <= params["percent_human"] <= 100.0
+        self.fraction_human = params["percent_human"]/100.0
 
     def get_human_annotation(self, R1, R2):
         ids = utils.parse_read_ids(R1)

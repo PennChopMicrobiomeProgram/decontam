@@ -31,11 +31,12 @@ bmtagger
 Here is list of tools supported:
 
 1. bmtagger
-2. all _ human (not yet implemented)
-3. none _ human(not yet implemented)
-4. bwa(not yet implemented)
-5. bowtie2(not yet implemented)
-6. blat(not yet implemented)
+2. all _ human
+3. none _ human
+4. random _ human
+5. bwa(not yet implemented)
+6. bowtie2(not yet implemented)
+7. blat(not yet implemented)
 
 ### Samples file
 

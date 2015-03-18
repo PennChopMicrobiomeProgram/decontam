@@ -1,8 +1,8 @@
 {
     "bmtagger": {
         "bitmask" : "/media/THING1/kyle/1205_PLEASE/bmtagger/hs37.bitmask"
-    }
+    }, 
     "random_human": {
-	"percent_human" : 20.0
+        "percent_human" : 20.0
     }
 }
