@@ -24,7 +24,7 @@ def command_line_arguments():
     parser.add_argument("-t", "--tools", required=True, type=str, help="human filtering tools.")
     parser.add_argument("-p", "--parameters_for_tools", 
         help="parameters for different tools(by default search parameters.json file in current folder.)")
-    parser.add_argument("-o", "--output", required=True, help="long table of results.")
+    parser.add_argument("-o", "--output", type=str, default="result.dat", help="long table of results.")
     args = parser.parse_args()
     check_file_exists_or_die(args.samples) 
     check_file_exists_or_die(args.tools) 
