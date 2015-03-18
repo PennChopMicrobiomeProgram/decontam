@@ -59,7 +59,7 @@ The pair of forward and reverse fastq files for a sample should have the same re
 Creates tab-delimited file with the following field:
 
 ```R
-#tool_name    sample_name   read_id is_human_prediction
+tool_name    sample_name   read_id is_human_prediction
 ```
 
 
