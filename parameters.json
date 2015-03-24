@@ -4,5 +4,8 @@
     }, 
     "random_human": {
         "percent_human" : 20.0
+    }, 
+    "bowtie": {
+        "index" : "/home/ashwini/ash/hg18.fa"
     }
 }
