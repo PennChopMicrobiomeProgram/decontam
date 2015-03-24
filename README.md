@@ -35,7 +35,7 @@ Here is list of tools supported:
 3. none _ human
 4. random _ human
 5. bwa(not yet implemented)
-6. bowtie2(not yet implemented)
+6. bowtie2
 7. blat(not yet implemented)
 
 ### Samples file
