@@ -65,6 +65,45 @@ class Bmtagger:
         return human_annotation
 
 
+
+class Bwa:
+    
+    name = "bwa"
+    
+    def __init__(self, parameters):
+        if parameters is None or "index" not in parameters:
+            raise KeyError("parameter dictionary for Bwa should have key 'index'.")
+        self.index = parameters["index"]
+        
+    def get_human_annotation(self, R1, R2):
+        output = self.run_bwa(R1, R2)
+        mapped = self.get_mapped_reads(output)
+        os.remove(output)
+        ids = utils.parse_read_ids(R1)
+        return [(id, 1 if id in mapped else 0) for id in ids]
+                                      
+    def run_bwa(self, R1, R2):
+        output = tempfile.NamedTemporaryFile(delete=False)
+        command = ("bwa mem -M " + self.index + " " + R1 + " " + R2 +
+            " > " +  output.name)
+        run_command(command, "cannot run bwa. Check path to index file.")
+        return output.name
+
+    def get_mapped_reads(self, filename):
+        QNAME = tempfile.NamedTemporaryFile(delete=False)
+        command = ("samtools view -F 4 " + filename + " | cut -f 1 > " + QNAME.name)
+        run_command(command, "cannot run samtools view.")
+        mapped = self.parse_ids(QNAME)
+        os.remove(QNAME.name)
+        return mapped
+
+    def parse_ids(self, filehandle):
+        ids = set()
+        for line in filehandle:
+            ids.add(line.strip())
+        return ids
+                                                                                    
+
 class All_human:
 
     name = "all_human"
