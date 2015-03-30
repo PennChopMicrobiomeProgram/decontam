@@ -1,4 +1,7 @@
 {
+    "blat": {
+        "index" : "/home/ashwini/ash/hg18.fa"
+    },
     "bwa": {
         "index" : "/home/ashwini/ash/hg18.fa"
     },

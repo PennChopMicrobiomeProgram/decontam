@@ -65,6 +65,58 @@ class Bmtagger:
         return human_annotation
 
 
+class Blat:
+
+    name = "blat"
+    def __init__(self, parameters):
+        if parameters is None or "index" not in parameters:
+            raise KeyError("parameter dictionary for blat should have key 'index'.")
+        self.index = parameters["index"]
+
+    def get_human_annotation(self, R1, R2):
+        if not ".fasta" in R1:
+            #Blat only accepts input in fasta format.
+            R1_fasta = self.fastq_to_fasta(R1)
+            R2_fasta = self.fastq_to_fasta(R2)
+        
+        output_R1 = self.run_blat(R1_fasta)
+        output_R2 = self.run_blat(R2_fasta)
+        
+        mapped = self.get_mapped_reads(output_R1)
+        mapped.update(self.get_mapped_reads(output_R2))
+        os.remove(output_R1)
+        os.remove(output_R2)
+        ids = utils.parse_read_ids(R1)
+        return [(id, 1 if id in mapped else 0) for id in ids]
+
+    def fastq_to_fasta(self, filename):
+        fasta = tempfile.NamedTemporaryFile(delete=False)
+        command = ("seqtk seq -a  " + filename + " > " + fasta.name)
+        run_command(command, "cannot run seqtk for blat.")
+        return fasta.name
+
+        
+    def run_blat(self, R):
+        output = tempfile.NamedTemporaryFile(delete=False)
+        command = ("blat -minScore=50 -fastMap "+ self.index + " " + R +
+                    " " +  output.name)
+        run_command(command, "cannot run blat. Check path to index file.")
+        return output.name
+
+    def get_mapped_reads(self, filename):
+        QNAME = tempfile.NamedTemporaryFile(delete=False)
+        command = ("cut -c20-64  " + filename + " > " + QNAME.name)
+        run_command(command, "cannot run cut for blat.")
+        mapped = self.parse_ids(QNAME)
+        os.remove(QNAME.name)
+        return mapped
+
+    def parse_ids(self, filehandle):
+        ids = set()
+        for line in filehandle:
+            ids.add(line.strip())
+        return ids
+                                                                                                                                                                                        
 
 class Bwa:
     
