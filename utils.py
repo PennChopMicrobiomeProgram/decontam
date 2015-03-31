@@ -1,6 +1,20 @@
 from Bio import SeqIO
 from pprint import pprint
 
+
+def extract_column(filehandle, column_number, skip_lines=0, sep="\t"):
+    """ gets unique values for a given column (column number starting 1) """
+    ids = set()
+    skip = 0
+    for line in filehandle:
+        if skip < skip_lines:
+            skip +=1
+            continue       
+        line = line.strip()
+        columns = line.split(sep)
+        ids.add(columns[column_number - 1])
+    return ids
+
 def parse_read_ids(fastq_filename):
     """extract fastq ids.
     

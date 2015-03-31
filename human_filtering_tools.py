@@ -12,6 +12,19 @@ def run_command(command, error_message):
     except subprocess.CalledProcessError:
         print error_message
 
+def get_mapped_reads(filename):
+    """
+    extracts set of qnames from sam file.
+    """
+    
+    QNAME = tempfile.NamedTemporaryFile(delete=False)
+    command = ("samtools view -F 4 " + filename + " | cut -f 1 > " + QNAME.name)
+    run_command(command, "cannot run samtools view.")
+    mapped = utils.extract_column(QNAME, 1)
+    os.remove(QNAME.name)
+    return mapped
+                                
+
 class Bmtagger:
 
     name = "bmtagger"
@@ -65,6 +78,72 @@ class Bmtagger:
         return human_annotation
 
 
+class Blat:
+
+    name = "blat"
+    def __init__(self, parameters):
+        if parameters is None or "index" not in parameters:
+            raise KeyError("parameter dictionary for blat should have key 'index'.")
+        self.index = parameters["index"]
+
+    def get_human_annotation(self, R1, R2):
+        mapped = self.extract_blat_hits(R1)
+        mapped.update(self.extract_blat_hits(R2))
+        ids = utils.parse_read_ids(R1)
+        return [(id, 1 if id in mapped else 0) for id in ids]
+
+    def extract_blat_hits(self, fastq_file):
+        fasta = self.fastq_to_fasta(fastq_file)
+        blat_psl = self.run_blat(fasta)
+        blat_psl.seek(0)
+        mapped = utils.extract_column(blat_psl, 10, 5)
+        os.remove(blat_psl.name)
+        os.remove(fasta)
+        return mapped
+
+    def fastq_to_fasta(self, filename):
+        fasta = tempfile.NamedTemporaryFile(delete=False)
+        command = ("seqtk seq -a  " + filename + " > " + fasta.name)
+        run_command(command, "cannot run seqtk for blat.")
+        return fasta.name
+
+        
+    def run_blat(self, R):
+        output = tempfile.NamedTemporaryFile(delete=False)
+        command = ("blat -minScore=50 -fastMap "+ self.index + " " + R +
+                    " " +  output.name)
+        run_command(command, "cannot run blat. Check path to index file.")
+        return output
+
+
+
+                                                                                                                                                                                        
+
+class Bwa:
+    
+    name = "bwa"
+    
+    def __init__(self, parameters):
+        if parameters is None or "index" not in parameters:
+            raise KeyError("parameter dictionary for Bwa should have key 'index'.")
+        self.index = parameters["index"]
+        
+    def get_human_annotation(self, R1, R2):
+        output = self.run_bwa(R1, R2)
+        mapped = get_mapped_reads(output)
+        os.remove(output)
+        ids = utils.parse_read_ids(R1)
+        return [(id, 1 if id in mapped else 0) for id in ids]
+                                      
+    def run_bwa(self, R1, R2):
+        output = tempfile.NamedTemporaryFile(delete=False)
+        command = ("bwa mem -M " + self.index + " " + R1 + " " + R2 +
+            " > " +  output.name)
+        run_command(command, "cannot run bwa. Check path to index file.")
+        return output.name
+
+                                                                                    
+
 class All_human:
 
     name = "all_human"
@@ -87,7 +166,7 @@ class Bowtie:
 
     def get_human_annotation(self, R1, R2):
         output = self.run_bowtie(R1, R2)
-        mapped = self.get_mapped_reads(output)
+        mapped = get_mapped_reads(output)
         os.remove(output)
         ids = utils.parse_read_ids(R1)
         return [(id, 1 if id in mapped else 0) for id in ids]
@@ -98,20 +177,6 @@ class Bowtie:
                 " -x " + self.index + " -S " + output.name)
         run_command(command, "cannot run bowtie2. Check path to index file.")
         return output.name
-
-    def get_mapped_reads(self, filename):
-        QNAME = tempfile.NamedTemporaryFile(delete=False)
-        command = ("samtools view -F 4 " + filename + " | cut -f 1 > " + QNAME.name)
-        run_command(command, "cannot run samtools view.")
-        mapped = self.parse_ids(QNAME)
-        os.remove(QNAME.name)
-        return mapped
-
-    def parse_ids(self, filehandle):
-        ids = set()
-        for line in filehandle:
-            ids.add(line.strip())
-        return ids
 
 class Random_human:
 
