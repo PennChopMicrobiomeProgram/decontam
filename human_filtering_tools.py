@@ -12,6 +12,19 @@ def run_command(command, error_message):
     except subprocess.CalledProcessError:
         print error_message
 
+def get_mapped_reads(filename):
+    """
+    extracts set of qnames from sam file.
+    """
+    
+    QNAME = tempfile.NamedTemporaryFile(delete=False)
+    command = ("samtools view -F 4 " + filename + " | cut -f 1 > " + QNAME.name)
+    run_command(command, "cannot run samtools view.")
+    mapped = utils.extract_column(QNAME, 1)
+    os.remove(QNAME.name)
+    return mapped
+                                
+
 class Bmtagger:
 
     name = "bmtagger"
@@ -74,20 +87,19 @@ class Blat:
         self.index = parameters["index"]
 
     def get_human_annotation(self, R1, R2):
-        if not ".fasta" in R1:
-            #Blat only accepts input in fasta format.
-            R1_fasta = self.fastq_to_fasta(R1)
-            R2_fasta = self.fastq_to_fasta(R2)
-        
-        output_R1 = self.run_blat(R1_fasta)
-        output_R2 = self.run_blat(R2_fasta)
-        
-        mapped = self.get_mapped_reads(output_R1)
-        mapped.update(self.get_mapped_reads(output_R2))
-        os.remove(output_R1)
-        os.remove(output_R2)
+        mapped = self.extract_blat_hits(R1)
+        mapped.update(self.extract_blat_hits(R2))
         ids = utils.parse_read_ids(R1)
         return [(id, 1 if id in mapped else 0) for id in ids]
+
+    def extract_blat_hits(self, fastq_file):
+        fasta = self.fastq_to_fasta(fastq_file)
+        blat_psl = self.run_blat(fasta)
+        blat_psl.seek(0)
+        mapped = utils.extract_column(blat_psl, 10, 5)
+        os.remove(blat_psl.name)
+        os.remove(fasta)
+        return mapped
 
     def fastq_to_fasta(self, filename):
         fasta = tempfile.NamedTemporaryFile(delete=False)
@@ -101,21 +113,10 @@ class Blat:
         command = ("blat -minScore=50 -fastMap "+ self.index + " " + R +
                     " " +  output.name)
         run_command(command, "cannot run blat. Check path to index file.")
-        return output.name
+        return output
 
-    def get_mapped_reads(self, filename):
-        QNAME = tempfile.NamedTemporaryFile(delete=False)
-        command = ("cut -c20-64  " + filename + " > " + QNAME.name)
-        run_command(command, "cannot run cut for blat.")
-        mapped = self.parse_ids(QNAME)
-        os.remove(QNAME.name)
-        return mapped
 
-    def parse_ids(self, filehandle):
-        ids = set()
-        for line in filehandle:
-            ids.add(line.strip())
-        return ids
+
                                                                                                                                                                                         
 
 class Bwa:
@@ -129,7 +130,7 @@ class Bwa:
         
     def get_human_annotation(self, R1, R2):
         output = self.run_bwa(R1, R2)
-        mapped = self.get_mapped_reads(output)
+        mapped = get_mapped_reads(output)
         os.remove(output)
         ids = utils.parse_read_ids(R1)
         return [(id, 1 if id in mapped else 0) for id in ids]
@@ -141,19 +142,6 @@ class Bwa:
         run_command(command, "cannot run bwa. Check path to index file.")
         return output.name
 
-    def get_mapped_reads(self, filename):
-        QNAME = tempfile.NamedTemporaryFile(delete=False)
-        command = ("samtools view -F 4 " + filename + " | cut -f 1 > " + QNAME.name)
-        run_command(command, "cannot run samtools view.")
-        mapped = self.parse_ids(QNAME)
-        os.remove(QNAME.name)
-        return mapped
-
-    def parse_ids(self, filehandle):
-        ids = set()
-        for line in filehandle:
-            ids.add(line.strip())
-        return ids
                                                                                     
 
 class All_human:
@@ -178,7 +166,7 @@ class Bowtie:
 
     def get_human_annotation(self, R1, R2):
         output = self.run_bowtie(R1, R2)
-        mapped = self.get_mapped_reads(output)
+        mapped = get_mapped_reads(output)
         os.remove(output)
         ids = utils.parse_read_ids(R1)
         return [(id, 1 if id in mapped else 0) for id in ids]
@@ -189,20 +177,6 @@ class Bowtie:
                 " -x " + self.index + " -S " + output.name)
         run_command(command, "cannot run bowtie2. Check path to index file.")
         return output.name
-
-    def get_mapped_reads(self, filename):
-        QNAME = tempfile.NamedTemporaryFile(delete=False)
-        command = ("samtools view -F 4 " + filename + " | cut -f 1 > " + QNAME.name)
-        run_command(command, "cannot run samtools view.")
-        mapped = self.parse_ids(QNAME)
-        os.remove(QNAME.name)
-        return mapped
-
-    def parse_ids(self, filehandle):
-        ids = set()
-        for line in filehandle:
-            ids.add(line.strip())
-        return ids
 
 class Random_human:
 
