@@ -15,6 +15,16 @@ def extract_column(filehandle, column_number, skip_lines=0, sep="\t"):
         ids.add(columns[column_number - 1])
     return ids
 
+def get_column(filehandle, column_number, sep="\t"):
+    id = list()
+    
+    for line in filehandle:
+        line = line.strip()
+        columns = line.split(sep)              
+        id.append(columns[column_number - 1])
+    filehandle.seek(0)
+    return id
+
 def parse_read_ids(fastq_filename):
     """extract fastq ids.
     

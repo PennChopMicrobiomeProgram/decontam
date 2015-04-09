@@ -3,6 +3,7 @@ import tempfile
 import subprocess
 import random
 import os
+import re
 
 import utils
 
@@ -18,12 +19,94 @@ def get_mapped_reads(filename):
     """
     
     QNAME = tempfile.NamedTemporaryFile(delete=False)
-    command = ("samtools view -F 4 " + filename + " | cut -f 1 > " + QNAME.name)
+    command = ("samtools view -F 4 " + filename + " > " + QNAME.name)
     run_command(command, "cannot run samtools view.")
-    mapped = utils.extract_column(QNAME, 1)
+    qname = utils.get_column(QNAME, 1)
+    cigar = utils.get_column(QNAME, 6)
+    mismatches = concatenate_lists_to_string(utils.get_column(QNAME, 12),utils.get_column(QNAME, 13), utils.get_column(QNAME, 14), utils.get_column(QNAME, 15))
+    mapped = get_mapped_reads_from_cigar(qname, cigar, mismatches)
     os.remove(QNAME.name)
     return mapped
-                                
+    
+
+def concatenate_lists_to_string(list1, list2, list3, list4):
+    joined_list =[]
+    for i in range(0, len(list1)):
+        joined_list.append("".join([list1[i], list2[i], list3[i], list4[i]]))
+    return joined_list
+
+def calculate_alignment_length(cigar_str):
+    """Calculate alignment length """
+    
+    all = re.split("\D", cigar_str)
+    all.remove("")
+    sum_all = sum(map(int, all))
+
+    #Remove soft/hard clipped nucleotides from alignment length
+    sum_soft_clip = 0
+    sum_hard_clip = 0
+        
+    if  re.findall("\d+S", cigar_str):
+        soft_clip = re.findall("\d+S", cigar_str)
+        soft_clip_join = "".join(soft_clip)
+        split_s = soft_clip_join.split("S")
+        split_s.remove("")
+        sum_soft_clip = sum(map(int, split_s))
+
+    elif re.findall("\d+H", cigar_str):
+        hard_clip = re.findall("\d+H", cigar_str)
+        hard_clip_join = "".join(hard_clip)
+        split_h = hard_clip_join.split("H")
+        split_h.remove("")
+        sum_hard_clip = sum(map(int, split_h))
+
+    return sum_all - sum_soft_clip - sum_hard_clip
+
+
+def calculate_identities(cigar_str, mismatch):
+     """Calculate number of identities (Matches from cigar string minus mismatches(XM : sam file)) """
+
+     match = re.findall("\d+M", cigar_str)
+     cat_match = "".join(match)
+     split_m = cat_match.split("M")
+     split_m.remove("")
+     sum_match = sum(map(int, split_m))
+     return sum_match - mismatch
+
+def parse_mismatches(mismatches):
+    mismatch = re.findall("XM:i:\d+", mismatches)
+    if mismatch:
+        return int(mismatch[0].split(":")[2])
+    else:
+        return 0
+
+def get_mapped_reads_from_cigar(qname, cigar, mismatches):
+    alignment_length = []
+    identities = []
+    
+    for i in range(0,len(cigar)):
+        #Calculate alignment length
+        alignment_length.append(calculate_alignment_length(cigar[i]))
+
+        #Calculate number of identities (Matches from cigar string minus mismatches(XM : sam file))
+        identities.append(calculate_identities(cigar[i], parse_mismatches(mismatches[i])))
+
+    mapped = filter_mapped_reads(qname, calculate_pct_identity(identities, alignment_length), alignment_length)
+    return mapped
+
+
+def calculate_pct_identity(identities, alignment_length):
+    pct_identity = []
+    for i in range(0, len(identities)):
+        pct_identity.append(float(identities[i])/alignment_length[i])
+    return pct_identity
+
+def filter_mapped_reads(qname, pct_identity, alignment_length,  pct_identity_threshold=0, alignment_length_threshold=100):
+    mapped = []
+    for i in range(0,len(qname)):
+        if pct_identity[i] >= pct_identity_threshold and alignment_length[i] >= alignment_length_threshold :
+            mapped.append(qname[i])
+    return mapped               
 
 class Bmtagger:
 
