@@ -64,6 +64,7 @@ def write_filtered_reads_to_fastq(fastq_file, r_id, tool_name, sample_name, is_r
 
     if is_r1:
         fname = tool_name + "_" + sample_name + "-R1.fastq"
+        print fname
     else:
         fname = tool_name + "_" + sample_name + "-R2.fastq"
         
@@ -76,7 +77,7 @@ def filter_human_from_fastq(results, sample):
     (tool_name, name_sample, read_id, is_human) = results[0]
     (sample_name, R1_fastq_file, R2_fastq_file) = sample
     r_id = get_non_human_read_ids(results)
-    
+    print results
     write_filtered_reads_to_fastq(R1_fastq_file, r_id, tool_name, sample_name, 1)    
     write_filtered_reads_to_fastq(R2_fastq_file, r_id, tool_name, sample_name, 0)
         
@@ -109,6 +110,6 @@ if __name__=="__main__":
             tool_name = tool.name
             results_for_tool_sample = utils.add_tool_sample(tool_name, sample_name, human_annotation)
             results += results_for_tool_sample
-            filter_human_from_fastq(results, sample)
+            filter_human_from_fastq(results_for_tool_sample, sample)
             #print results_for_tool_sample
     write_results(args.output, results)
