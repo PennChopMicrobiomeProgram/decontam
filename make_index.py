@@ -20,7 +20,7 @@ def run_command(command, error_message):
         print error_message
 
 def make_index_bowtie(genome, organism):
-    command = ("bowtie2-build -f " + genome + " " + organism)
+    command = ("bowtie2-build -f " + genome + " " + organism + ".fasta")
     run_command(command, "cannot run bowtie2. Check path to genome file.")
 
 def make_index_bmtagger(genome, organism):
