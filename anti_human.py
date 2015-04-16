@@ -36,8 +36,50 @@ def write_results(filename, results):
     writer = csv.writer(open(filename, 'w'), delimiter="\t")
     writer.writerow(["tool", "sample", "read_id", "is_human"])
     writer.writerows(results)
-  
 
+def get_non_human_read_ids(results):
+    r_id = [] 
+    for result in results:
+        (tool_name, name_sample, read_id, is_human) = result
+        if not is_human:
+            r_id.append(read_id)
+
+    return sorted(r_id)
+
+def write_filtered_reads_to_fastq(fastq_file, r_id, tool_name, sample_name, is_r1):
+
+    filtered_reads = []
+    flag = 0
+    with open(fastq_file, "r") as sample:
+        for line in sample:
+            if line.startswith("@"):
+                line = line.rstrip()
+                if str(line[1:]) in r_id:
+                    flag = 1
+                else:
+                    flag = 0
+
+            if flag:
+                filtered_reads.append(line.rstrip())
+
+    if is_r1:
+        fname = tool_name + "_" + sample_name + "-R1.fastq"
+    else:
+        fname = tool_name + "_" + sample_name + "-R2.fastq"
+        
+    with open(fname, "w") as filter:
+        for read in filtered_reads:
+            filter.write(read)
+            filter.write("\n")
+    
+def filter_human_from_fastq(results, sample):
+    (tool_name, name_sample, read_id, is_human) = results[0]
+    (sample_name, R1_fastq_file, R2_fastq_file) = sample
+    r_id = get_non_human_read_ids(results)
+    
+    write_filtered_reads_to_fastq(R1_fastq_file, r_id, tool_name, sample_name, 1)    
+    write_filtered_reads_to_fastq(R2_fastq_file, r_id, tool_name, sample_name, 0)
+        
 if __name__=="__main__":
     args = command_line_arguments()
 
@@ -67,7 +109,6 @@ if __name__=="__main__":
             tool_name = tool.name
             results_for_tool_sample = utils.add_tool_sample(tool_name, sample_name, human_annotation)
             results += results_for_tool_sample
+            filter_human_from_fastq(results, sample)
+            #print results_for_tool_sample
     write_results(args.output, results)
-             
- 
-    
