@@ -48,35 +48,6 @@ def get_non_human_read_ids(results):
 
     return r_id
 
-'''
-def write_filtered_reads_to_fastq(fastq_file, r_id, tool_name, sample_name, is_r1, path):
-
-    filtered_reads = []
-    flag = 0
-    with open(fastq_file, "r") as sample:
-        for line in sample:
-            if line.startswith("@"):
-                line = line.rstrip()
-                if str(line[1:]) in r_id:
-                    flag = 1
-                else:
-                    flag = 0
-
-            if flag:
-                filtered_reads.append(line.rstrip())
-
-    if is_r1:
-        fname = path + tool_name + "_" + sample_name + "-R1.fastq"
-        print fname
-    else:
-        fname = path + tool_name + "_" + sample_name + "-R2.fastq"
-        
-    with open(fname, "w") as filter:
-        for read in filtered_reads:
-            filter.write(read)
-            filter.write("\n")
-'''
-
 def _grouper(iterable, n):
     "Collect data into fixed-length chunks or blocks"
     args = [iter(iterable)] * n
@@ -84,6 +55,8 @@ def _grouper(iterable, n):
 
 
 def parse_fastq(fastq_file, fname, r_id):
+    """ parse original fastq file and write new fastq file the filtered non-human reads.
+    """
     with open(fastq_file, "r") as f:
         with open(fname, "w") as fastq:
             for desc, seq, _, qual in _grouper(f, 4):
@@ -96,29 +69,19 @@ def parse_fastq(fastq_file, fname, r_id):
                     fastq.write("+\n")
                     fastq.write(qual + "\n")
          
-
-
 def filter_human_from_fastq(results, sample, path):
+    """ Get non-human read ids and filter fastq file for non-human reads.
+    """
     (tool_name, name_sample, read_id, is_human) = results[0]
     (sample_name, R1_fastq_file, R2_fastq_file) = sample
+
+    #get non-human read ids.
     r_id = get_non_human_read_ids(results)
     fname_r1 = path + tool_name + "_" + sample_name + "-R1.fastq"
     fname_r2 = path + tool_name + "_" + sample_name + "-R2.fastq"
-    r1_seq = parse_fastq(R1_fastq_file, fname_r1, r_id)
-    r2_seq = parse_fastq(R2_fastq_file, fname_r2, r_id)
+    parse_fastq(R1_fastq_file, fname_r1, r_id)
+    parse_fastq(R2_fastq_file, fname_r2, r_id)
     
-'''
-def write_filtered_to_fastq(r, r_id, fname):
-    with open(fname, "w") as fastq:
-        for key in sorted(r.keys()):
-            if key in r_id:
-                fastq.write("@" + key + "\n")
-                fastq.write(r[key][0] + "\n")
-                fastq.write("+\n")
-                fastq.write(r[key][1] + "\n")
-        
-'''
-
 if __name__=="__main__":
     args = command_line_arguments()
 
