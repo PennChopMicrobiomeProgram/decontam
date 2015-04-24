@@ -70,7 +70,7 @@ def calculate_alignment_length(cigar_str):
 
     elif hard.match(cigar_str):
         hard_clip = hard.findall(cigar_str)
-        hard_clip_parsed = [ h[0:len(s)-1] for h in hard_clip ]
+        hard_clip_parsed = [ h[0:len(h)-1] for h in hard_clip ]
         sum_hard_clip = sum(map(int, hard_clip_parsed))
 
     return sum_all - sum_soft_clip - sum_hard_clip
