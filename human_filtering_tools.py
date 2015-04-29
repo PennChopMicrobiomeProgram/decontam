@@ -2,6 +2,7 @@ import csv
 import os
 import random
 import re
+import shutil
 import subprocess
 import tempfile
 import utils
@@ -112,15 +113,16 @@ def filter_mapped_reads(qname, pct_identity, alignment_length,  pct_identity_thr
             mapped.add(qname[i])
     return mapped               
 
-class Bmtagger:
 
-    name = "bmtagger"
+class Bmfilter:
+
+    name = "bmfilter"
 
     def __init__(self, parameters):
         if parameters is None or "bitmask" not in parameters:
             raise KeyError("parameter dictionary for Bmtagger should have key 'bitmask'.")
         self.bitmask = parameters["bitmask"] 
-
+        
     def get_human_annotation(self, R1, R2):
         """ creates human read annotation by running a tool.
             Args:
@@ -132,11 +134,11 @@ class Bmtagger:
                 (so in R sum(is_human) is number of reads annotated as human reads`)
                 length of list equal to number of read in the fastq files.
         """
-        output = self.run_bmtagger(R1, R2)
+        output = self.run_bmfilter(R1, R2)
         read_classification = self.parse_bmtagger_output(open(output))
         return read_classification
-
-    def run_bmtagger(self, R1, R2):
+ 
+    def run_bmfilter(self, R1, R2):
         """ run bmtagger and return filename with the output file."""
         output = tempfile.NamedTemporaryFile()
         command = ("bmfilter -1 " + R1 + " -2 " + R2 + " -q 1 -T" + 
@@ -165,6 +167,49 @@ class Bmtagger:
         return human_annotation
 
 
+class Bmtagger:
+
+    name = "bmtagger"
+
+    def __init__(self, parameters):
+        if parameters is None or "bitmask" not in parameters:
+            raise KeyError("parameter dictionary for Bmtagger should have key 'bitmask'.")
+        self.bitmask = parameters["bitmask"] 
+        self.srprism = parameters["srprism"]
+        
+    def get_human_annotation(self, R1, R2):
+        """ creates human read annotation by running a tool.
+            Args:
+                R1, R2 forward and reverese reads
+            Returns:
+                list of tuples, each tuple is a pair of: read_id and is_human
+                is_human = 1 if read annotated as human read
+                is_human = 0 if read annotated as NON human read
+                (so in R sum(is_human) is number of reads annotated as human reads`)
+                length of list equal to number of read in the fastq files.
+        """
+        output = self.run_bmtagger(R1, R2)
+        mapped = self.read_classification(open(output))
+        ids = utils.parse_read_ids(R1)
+        return [(id, 1 if id in mapped else 0) for id in ids]
+
+    def run_bmtagger(self, R1, R2):
+        output = tempfile.NamedTemporaryFile(delete=False)
+        tmp = tempfile.mkdtemp()
+        command = ("/media/THING1/kyle/1205_PLEASE/bmtagger.sh -b " + self.bitmask + " -x " +
+                   self.srprism + " -1 " + R1 + " -2 " + R2 + " -q 1 -T " + tmp + " -o " +
+                   output.name)
+        run_command(command, "cannot run bmtagger. Check path to bitmask.")
+        shutil.rmtree(tmp)
+        return output.name
+
+    def read_classification(self, out):
+        mapped = set()
+        for line in out:
+            mapped.add(line.rstrip())
+        return mapped
+        
+     
 class Blat:
 
     name = "blat"

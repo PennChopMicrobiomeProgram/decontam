@@ -3,6 +3,7 @@ import sys
 
 from human_filtering_tools import Blat
 from human_filtering_tools import Bwa
+from human_filtering_tools import Bmfilter
 from human_filtering_tools import Bmtagger
 from human_filtering_tools import All_human
 from human_filtering_tools import None_human
@@ -17,6 +18,7 @@ from human_filtering_tools import Bowtie
 tools_available = {
     Blat,
     Bwa,
+    Bmfilter,
     Bmtagger,
     All_human,
     None_human, 

@@ -5,8 +5,12 @@
     "bwa": {
         "index" : "/home/ashwini/ash/hg18.fa"
     },
+    "bmfilter": {
+        "bitmask" : "/home/ashwini/ash/reference.bitmask"
+    },
     "bmtagger": {
-        "bitmask" : "/media/THING1/kyle/1205_PLEASE/bmtagger/hs37.bitmask"
+        "bitmask" : "/home/ashwini/ash/reference.bitmask",
+	"srprism" : "/home/ashwini/ash/reference.srprism"
     }, 
     "random_human": {
         "percent_human" : 20.0
