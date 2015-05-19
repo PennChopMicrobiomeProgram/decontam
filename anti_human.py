@@ -9,6 +9,7 @@ import parser
 import tools
 import utils
 
+
 def check_file_exists_or_die(file_name):
     if not os.path.isfile(file_name): 
         print "ERROR: file " + file_name + " does not exist: check the file name and path."
@@ -54,21 +55,30 @@ def _grouper(iterable, n):
     return itertools.izip(*args)
 
 
-def parse_fastq(fastq_file, fname, r_id):
+def parse_fastq(f):
     """ parse original fastq file and write new fastq file the filtered non-human reads.
     """
-    with open(fastq_file, "r") as f:
-        with open(fname, "w") as fastq:
-            for desc, seq, _, qual in _grouper(f, 4):
-                desc = desc.rstrip()[1:]
-                seq = seq.rstrip()
-                qual = qual.rstrip()
-                if desc.split(" ")[0] in r_id:
-                    fastq.write("@" + desc + "\n")
-                    fastq.write(seq + "\n")
-                    fastq.write("+\n")
-                    fastq.write(qual + "\n")
-         
+    for desc, seq, _, qual in _grouper(f, 4):
+        desc = desc.rstrip()[1:]
+        seq = seq.rstrip()
+        qual = qual.rstrip()
+        yield desc, seq, qual
+
+def write_fastq(out_fastq, desc, seq, qual):
+    out_fastq.write("@" + desc + "\n")
+    out_fastq.write(seq + "\n")
+    out_fastq.write("+\n")
+    out_fastq.write(qual + "\n")
+             
+
+def filter_fastq(in_fastq, out_fastq, r_id):
+    reads = parse_fastq(in_fastq)
+    for desc, seq, qual in reads:
+        if desc.split(" ")[0] in r_id:
+            write_fastq(out_fastq, desc, seq, qual)
+    in_fastq.close()
+    out_fastq.close()
+
 def filter_human_from_fastq(results, sample, path):
     """ Get non-human read ids and filter fastq file for non-human reads.
     """
@@ -79,12 +89,12 @@ def filter_human_from_fastq(results, sample, path):
     r_id = get_non_human_read_ids(results)
     fname_r1 = path + tool_name + "_" + sample_name + "-R1.fastq"
     fname_r2 = path + tool_name + "_" + sample_name + "-R2.fastq"
-    parse_fastq(R1_fastq_file, fname_r1, r_id)
-    parse_fastq(R2_fastq_file, fname_r2, r_id)
+    filter_fastq(open(R1_fastq_file), open(fname_r1, "w"), r_id)
+    filter_fastq(open(R2_fastq_file), open(fname_r2, "w"), r_id)
     
-if __name__=="__main__":
+def main():
     args = command_line_arguments()
-
+    import tools
     tool_names = parser.parse_tool_names(open(args.tools)) 
     if args.parameters_for_tools:
         tool_parameters = tools.get_parameters_for_tools(args.parameters_for_tools)
@@ -113,3 +123,7 @@ if __name__=="__main__":
             results += results_for_tool_sample
             filter_human_from_fastq(results_for_tool_sample, sample, args.path)
     write_results(args.path, args.output, results)
+
+
+if __name__=="__main__":
+    main()

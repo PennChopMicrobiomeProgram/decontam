@@ -20,101 +20,105 @@ def run_command(command, error_message):
     except subprocess.CalledProcessError:
         print error_message
 
-def get_mapped_reads(filename):
-    """
-    extracts set of qnames from sam file.
-    """
+
+class tool(object):
     
-    QNAME = tempfile.NamedTemporaryFile(delete=False)
-    command = ("samtools view -F 4 " + filename + " > " + QNAME.name)
-    run_command(command, "cannot run samtools view.")
-    qname = utils.get_column(QNAME, 1)
-    cigar = utils.get_column(QNAME, 6)
-    mismatches = parse_mismatches_from_lists(
-        utils.get_column(QNAME, 12),utils.get_column(QNAME, 13),
-        utils.get_column(QNAME, 14), utils.get_column(QNAME, 15))
-    mapped = get_mapped_reads_from_cigar(qname, cigar, mismatches)
-    os.remove(QNAME.name)
-    return mapped
+    def get_mapped_reads(self, filename):
+        """
+        extracts set of qnames from sam file.
+        """
+    
+        QNAME = tempfile.NamedTemporaryFile(delete=False)
+        command = ("samtools view -F 4 " + filename + " > " + QNAME.name)
+        run_command(command, "cannot run samtools view.")
+        qname = utils.get_column(QNAME, 1)
+        cigar = utils.get_column(QNAME, 6)
+        mismatches = self.parse_mismatches_from_lists(
+            utils.get_column(QNAME, 12),utils.get_column(QNAME, 13),
+            utils.get_column(QNAME, 14), utils.get_column(QNAME, 15))
+        mapped = self.get_mapped_reads_from_cigar(qname, cigar, mismatches)
+        os.remove(QNAME.name)
+        return mapped
     
 
-def parse_mismatches_from_lists(list1, list2, list3, list4):
-    mismatches = []
-    for i in range(len(list1)):
-        if list1[i].startswith("XM:i:"):
-            mismatches.append(int(list1[i].split(":")[2]))
-        elif list2[i].startswith("XM:i:"):
-            mismatches.append(int(list2[i].split(":")[2]))
-        elif list3[i].startswith("XM:i:"):
-            mismatches.append(int(list3[i].split(":")[2]))
-        elif list4[i].startswith("XM:i:"):
-            mismatches.append(int(list4[i].split(":")[2]))
-        else:
-            mismatches.append(0)
-    return mismatches
+    def parse_mismatches_from_lists(self, list1, list2, list3, list4):
+        """parse mismatch from variaous misc. column in sam file (XM:i:*) """
+        mismatches = []
+        for i in range(len(list1)):
+            if list1[i].startswith("XM:i:"):
+                mismatches.append(int(list1[i].split(":")[2]))
+            elif list2[i].startswith("XM:i:"):
+                mismatches.append(int(list2[i].split(":")[2]))
+            elif list3[i].startswith("XM:i:"):
+                mismatches.append(int(list3[i].split(":")[2]))
+            elif list4[i].startswith("XM:i:"):
+                mismatches.append(int(list4[i].split(":")[2]))
+            else:
+                mismatches.append(0)
+        return mismatches
 
 
-def calculate_alignment_length(cigar_str):
-    """Calculate alignment length """
+    def calculate_alignment_length(self, cigar_str):
+        """Calculate alignment length """
     
-    all = all_cigar.split(cigar_str)
-    sum_all = sum(map(int, all[0:len(all)-1]))
+        all = all_cigar.split(cigar_str)
+        sum_all = sum(map(int, all[0:len(all)-1]))
 
-    #Remove soft/hard clipped nucleotides from alignment length
-    sum_soft_clip = 0
-    sum_hard_clip = 0
+        #Remove soft/hard clipped nucleotides from alignment length
+        sum_soft_clip = 0
+        sum_hard_clip = 0
         
-    if  soft.match(cigar_str):
-        soft_clip = soft.findall(cigar_str)
-        soft_clip_parsed = [ s[0:len(s)-1] for s in soft_clip ]
-        sum_soft_clip = sum(map(int, soft_clip_parsed))
+        if  soft.match(cigar_str):
+            soft_clip = soft.findall(cigar_str)
+            soft_clip_parsed = [ s[0:len(s)-1] for s in soft_clip ]
+            sum_soft_clip = sum(map(int, soft_clip_parsed))
 
-    elif hard.match(cigar_str):
-        hard_clip = hard.findall(cigar_str)
-        hard_clip_parsed = [ h[0:len(h)-1] for h in hard_clip ]
-        sum_hard_clip = sum(map(int, hard_clip_parsed))
+        elif hard.match(cigar_str):
+            hard_clip = hard.findall(cigar_str)
+            hard_clip_parsed = [ h[0:len(h)-1] for h in hard_clip ]
+            sum_hard_clip = sum(map(int, hard_clip_parsed))
 
-    return sum_all - sum_soft_clip - sum_hard_clip
+        return sum_all - sum_soft_clip - sum_hard_clip
 
 
-def calculate_identities(cigar_str, mismatch):
-     """Calculate number of identities (Matches from cigar string minus mismatches(XM : sam file)) """
+    def calculate_identities(self, cigar_str, mismatch):
+        """Calculate number of identities (Matches from cigar string minus mismatches(XM : sam file)) """
 
-     match = matches.findall(cigar_str)
-     match_parsed = [ m[0:len(m)-1] for m in match ]
-     sum_match = sum(map(int, match_parsed))
-     return sum_match - mismatch
+        match = matches.findall(cigar_str)
+        match_parsed = [ m[0:len(m)-1] for m in match ]
+        sum_match = sum(map(int, match_parsed))
+        return sum_match - mismatch
 
-def get_mapped_reads_from_cigar(qname, cigar, mismatches):
-    alignment_length = []
-    identities = []
+    def get_mapped_reads_from_cigar(self, qname, cigar, mismatches):
+        alignment_length = []
+        identities = []
     
-    for i in range(0,len(cigar)):
-        #Calculate alignment length
-        alignment_length.append(calculate_alignment_length(cigar[i]))
+        for i in range(len(cigar)):
+            #Calculate alignment length
+            alignment_length.append(self.calculate_alignment_length(cigar[i]))
 
-        #Calculate number of identities (Matches from cigar string minus mismatches(XM : sam file))
-        identities.append(calculate_identities(cigar[i], mismatches[i]))
+            #Calculate number of identities (Matches from cigar string minus mismatches(XM : sam file))
+            identities.append(self.calculate_identities(cigar[i], mismatches[i]))
 
-    mapped = filter_mapped_reads(qname, calculate_pct_identity(identities, alignment_length), alignment_length)
-    return mapped
-
-
-def calculate_pct_identity(identities, alignment_length):
-    pct_identity = []
-    for i in range(0, len(identities)):
-        pct_identity.append(float(identities[i])/alignment_length[i])
-    return pct_identity
-
-def filter_mapped_reads(qname, pct_identity, alignment_length,  pct_identity_threshold=0.5, alignment_length_threshold=100):
-    mapped = set()
-    for i in range(0,len(qname)):
-        if pct_identity[i] >= pct_identity_threshold and alignment_length[i] >= alignment_length_threshold :
-            mapped.add(qname[i])
-    return mapped               
+        mapped = self.filter_mapped_reads(qname, self.calculate_pct_identity(identities, alignment_length), alignment_length)
+        return mapped
 
 
-class Bmfilter:
+    def calculate_pct_identity(self, identities, alignment_length):
+        pct_identity = []
+        for i in range(0, len(identities)):
+            pct_identity.append(float(identities[i])/alignment_length[i])
+        return pct_identity
+
+    def filter_mapped_reads(self,qname, pct_identity, alignment_length,  pct_identity_threshold=0.5, alignment_length_threshold=100):
+        mapped = set()
+        for i in range(len(qname)):
+            if pct_identity[i] >= pct_identity_threshold and alignment_length[i] >= alignment_length_threshold :
+                mapped.add(qname[i])
+        return mapped               
+
+
+class Bmfilter(tool):
 
     name = "bmfilter"
 
@@ -167,7 +171,7 @@ class Bmfilter:
         return human_annotation
 
 
-class Bmtagger:
+class Bmtagger(tool):
 
     name = "bmtagger"
 
@@ -210,7 +214,7 @@ class Bmtagger:
         return mapped
         
      
-class Blat:
+class Blat(tool):
 
     name = "blat"
     def __init__(self, parameters):
@@ -247,7 +251,7 @@ class Blat:
         run_command(command, "cannot run blat. Check path to index file.")
         return output
 
-class Bwa:
+class Bwa(tool):
     
     name = "bwa"
     
@@ -258,7 +262,7 @@ class Bwa:
         
     def get_human_annotation(self, R1, R2):
         output = self.run_bwa(R1, R2)
-        mapped = get_mapped_reads(output)
+        mapped = self.get_mapped_reads(output)
         os.remove(output)
         ids = utils.parse_read_ids(R1)
         return [(id, 1 if id in mapped else 0) for id in ids]
@@ -270,18 +274,8 @@ class Bwa:
         run_command(command, "cannot run bwa. Check path to index file.")
         return output.name
                                                                                     
-class All_human:
 
-    name = "all_human"
-
-    def __init__(self, params):
-        pass
-
-    def get_human_annotation(self, R1, R2):
-        ids = utils.parse_read_ids(R1)
-        return [(id, 1) for id in ids]
-
-class Bowtie:
+class Bowtie(tool):
 
     name = "bowtie"
 
@@ -292,14 +286,14 @@ class Bowtie:
 
     def get_human_annotation(self, R1, R2):
         output = self.run_bowtie(R1, R2)
-        mapped = get_mapped_reads(output)
+        mapped = self.get_mapped_reads(output)
         os.remove(output)
         ids = utils.parse_read_ids(R1)
         return [(id, 1 if id in mapped else 0) for id in ids]
 
     def run_bowtie(self, R1, R2):
         output = tempfile.NamedTemporaryFile(delete=False)
-        command = ("bowtie2 -1 " + R1 + " -2 " + R2 + 
+        command = ("bowtie2 --local --very-sensitive-local -1 " + R1 + " -2 " + R2 + 
                 " -x " + self.index + " -S " + output.name)
         run_command(command, "cannot run bowtie2. Check path to index file.")
         return output.name
@@ -328,4 +322,14 @@ class None_human:
         return [(id, 0) for id in ids]
 
 
+class All_human:
+
+    name = "all_human"
+
+    def __init__(self, params):
+        pass
+
+    def get_human_annotation(self, R1, R2):
+        ids = utils.parse_read_ids(R1)
+        return [(id, 1) for id in ids]
 
