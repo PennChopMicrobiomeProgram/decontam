@@ -17,8 +17,8 @@ matches = re.compile("\d+M")
 def run_command(command, error_message):
     try:
         subprocess.check_call(command, shell=True)
-    except subprocess.CalledProcessError:
-        print error_message
+    except subprocess.CalledProcessError as e:
+        print e.stderr
 
 
 class tool(object):
