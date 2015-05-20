@@ -34,8 +34,8 @@ class tool(object):
         qname = utils.get_column(QNAME, 1)
         cigar = utils.get_column(QNAME, 6)
         mismatches = self._parse_mismatches_from_lists(
-            utils.get_column(QNAME, 12),utils.get_column(QNAME, 13),
-            utils.get_column(QNAME, 14), utils.get_column(QNAME, 15))
+            utils.get_multiple_columns(QNAME, [12,13,14,15]))
+            
         mapped = self._get_mapped_reads_from_cigar(qname, cigar, mismatches)
         os.remove(QNAME.name)
         return mapped
@@ -47,19 +47,15 @@ class tool(object):
         return x.startswith("XM:i:")
     
         
-    def _parse_mismatches_from_lists(self, list1, list2, list3, list4):
+    def _parse_mismatches_from_lists(self, cols):
         """parse mismatch from variaous misc. column in sam file (XM:i:*) """
-        #check all list have same length
+
         mismatches = []
-        for i in range(len(list1)):
-            if self._has_mismatch(list1[i]):
-                mismatches.append(self._get_mismatch(list1[i]))
-            elif self._has_mismatch(list2[i]):
-                mismatches.append(self._get_mismatch(list2[i]))
-            elif self._has_mismatch(list3[i]):
-                mismatches.append(self._get_mismatch(list3[i]))
-            elif self._has_mismatch(list4[i]):
-                mismatches.append(self._get_mismatch(list4[i]))
+        for row in cols:
+            for x in row:
+                if self._has_mismatch(x):
+                    mismatches.append(self._get_mismatch(x))
+                    break
             else:
                 mismatches.append(0)
         return mismatches
