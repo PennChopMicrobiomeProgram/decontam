@@ -57,6 +57,12 @@ class tool(object):
                 mismatches.append(0)
         return mismatches
 
+    def _get_clip(self, find_clip):
+        #find_clip = soft.findall(cigar_str)
+        clip_parsed = [ s[0:len(s)-1] for s in find_clip ]
+        clip = sum(map(int, clip_parsed))
+        return clip
+
 
     def _calculate_alignment_length(self, cigar_str):
         """Calculate alignment length """
@@ -69,15 +75,11 @@ class tool(object):
         sum_hard_clip = 0
         
         if  soft.match(cigar_str):
-            soft_clip = soft.findall(cigar_str)
-            soft_clip_parsed = [ s[0:len(s)-1] for s in soft_clip ]
-            sum_soft_clip = sum(map(int, soft_clip_parsed))
-
+            sum_soft_clip = self._get_clip(soft.findall(cigar_str))
+            
         elif hard.match(cigar_str):
-            hard_clip = hard.findall(cigar_str)
-            hard_clip_parsed = [ h[0:len(h)-1] for h in hard_clip ]
-            sum_hard_clip = sum(map(int, hard_clip_parsed))
-
+            sum_hard_clip = self._get_clip(hard.findall(cigar_str))
+            
         return sum_all - sum_soft_clip - sum_hard_clip
 
 
@@ -118,7 +120,7 @@ class tool(object):
         return mapped               
 
 
-class Bmfilter(tool):
+class Bmfilter():
 
     name = "bmfilter"
 
