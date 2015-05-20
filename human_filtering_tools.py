@@ -40,28 +40,33 @@ class tool(object):
         os.remove(QNAME.name)
         return mapped
     
+    def _get_mismatch(self, mismatch):
+        return int(mismatch.split(":")[2])
 
+    def _has_mismatch(self, x):
+        return x.startswith("XM:i:")
+    
+        
     def _parse_mismatches_from_lists(self, list1, list2, list3, list4):
         """parse mismatch from variaous misc. column in sam file (XM:i:*) """
+        #check all list have same length
         mismatches = []
         for i in range(len(list1)):
-            if list1[i].startswith("XM:i:"):
-                mismatches.append(int(list1[i].split(":")[2]))
-            elif list2[i].startswith("XM:i:"):
-                mismatches.append(int(list2[i].split(":")[2]))
-            elif list3[i].startswith("XM:i:"):
-                mismatches.append(int(list3[i].split(":")[2]))
-            elif list4[i].startswith("XM:i:"):
-                mismatches.append(int(list4[i].split(":")[2]))
+            if self._has_mismatch(list1[i]):
+                mismatches.append(self._get_mismatch(list1[i]))
+            elif self._has_mismatch(list2[i]):
+                mismatches.append(self._get_mismatch(list2[i]))
+            elif self._has_mismatch(list3[i]):
+                mismatches.append(self._get_mismatch(list3[i]))
+            elif self._has_mismatch(list4[i]):
+                mismatches.append(self._get_mismatch(list4[i]))
             else:
                 mismatches.append(0)
         return mismatches
 
-    def _get_clip(self, find_clip):
-        #find_clip = soft.findall(cigar_str)
-        clip_parsed = [ s[0:len(s)-1] for s in find_clip ]
-        clip = sum(map(int, clip_parsed))
-        return clip
+    def _get_pattern_sum(self, matched_pattern):
+        pattern_parsed = [ s[0:len(s)-1] for s in matched_pattern ]
+        return sum(map(int, pattern_parsed))
 
 
     def _calculate_alignment_length(self, cigar_str):
@@ -75,10 +80,10 @@ class tool(object):
         sum_hard_clip = 0
         
         if  soft.match(cigar_str):
-            sum_soft_clip = self._get_clip(soft.findall(cigar_str))
+            sum_soft_clip = self._get_pattern_sum(soft.findall(cigar_str))
             
         elif hard.match(cigar_str):
-            sum_hard_clip = self._get_clip(hard.findall(cigar_str))
+            sum_hard_clip = self._get_pattern_sum(hard.findall(cigar_str))
             
         return sum_all - sum_soft_clip - sum_hard_clip
 
@@ -86,37 +91,31 @@ class tool(object):
     def _calculate_identities(self, cigar_str, mismatch):
         """Calculate number of identities (Matches from cigar string minus mismatches(XM : sam file)) """
 
-        match = matches.findall(cigar_str)
-        match_parsed = [ m[0:len(m)-1] for m in match ]
-        sum_match = sum(map(int, match_parsed))
+        sum_match = self._get_pattern_sum(matches.findall(cigar_str))
         return sum_match - mismatch
 
     def _get_mapped_reads_from_cigar(self, qname, cigar, mismatches):
         alignment_length = []
         identities = []
     
-        for i in range(len(cigar)):
+        for cigar_str, mismatch in zip(cigar, mismatches):
             #Calculate alignment length
-            alignment_length.append(self._calculate_alignment_length(cigar[i]))
+            alignment_length.append(self._calculate_alignment_length(cigar_str))
 
             #Calculate number of identities (Matches from cigar string minus mismatches(XM : sam file))
-            identities.append(self._calculate_identities(cigar[i], mismatches[i]))
+            identities.append(self._calculate_identities(cigar_str, mismatch))
 
         mapped = self._filter_mapped_reads(qname, self._calculate_pct_identity(identities, alignment_length), alignment_length)
         return mapped
 
-
     def _calculate_pct_identity(self, identities, alignment_length):
-        pct_identity = []
-        for i in range(0, len(identities)):
-            pct_identity.append(float(identities[i])/alignment_length[i])
-        return pct_identity
+        return [ float(iden)/alen for iden, alen in zip(identities, alignment_length) ]
 
     def _filter_mapped_reads(self,qname, pct_identity, alignment_length,  pct_identity_threshold=0.5, alignment_length_threshold=100):
         mapped = set()
-        for i in range(len(qname)):
-            if pct_identity[i] >= pct_identity_threshold and alignment_length[i] >= alignment_length_threshold :
-                mapped.add(qname[i])
+        for qn, pct, alen in zip(qname, pct_identity, alignment_length):
+            if pct >= pct_identity_threshold and alen >= alignment_length_threshold :
+                mapped.add(qn)
         return mapped               
 
 
