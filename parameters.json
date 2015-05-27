@@ -1,4 +1,7 @@
 {
+    "snap": {
+        "index" : "/home/ashwini/ash/snap_hg18/"
+    },
     "blat": {
         "index" : "/home/ashwini/ash/hg18.fa"
     },

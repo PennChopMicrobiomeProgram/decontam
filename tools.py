@@ -1,6 +1,7 @@
 import json
 import sys
 
+from human_filtering_tools import Snap
 from human_filtering_tools import Blat
 from human_filtering_tools import Bwa
 from human_filtering_tools import Bmfilter
@@ -16,6 +17,7 @@ from human_filtering_tools import Bowtie
 """
 
 tools_available = {
+    Snap,
     Blat,
     Bwa,
     Bmfilter,

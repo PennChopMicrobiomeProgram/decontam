@@ -115,6 +115,31 @@ class tool(object):
         return mapped               
 
 
+class Snap(tool):
+    name = "snap"
+
+    def __init__(self, parameters):
+        if parameters is None or "index" not in parameters:
+            raise KeyError("parameter dictionary for snap should have key 'index'.")
+        self.index = parameters["index"]
+        
+    def get_human_annotation(self, R1, R2):
+        output = self._run_snap(R1, R2)
+        mapped = self._get_mapped_reads(output)
+        os.remove(output)
+        ids = utils.parse_read_ids(R1)
+        return [(id, 1 if id in mapped else 0) for id in ids]
+                                      
+    def _run_snap(self, R1, R2):
+        output = tempfile.NamedTemporaryFile(delete=False)
+        command = ("snap paired " + self.index + " " + R1 + " " + R2 +
+            "  -o -sam " +  output.name)
+        run_command(command, "cannot run snap. Check path to index file.")
+        return output.name
+        
+        
+
+
 class Bmfilter():
 
     name = "bmfilter"
