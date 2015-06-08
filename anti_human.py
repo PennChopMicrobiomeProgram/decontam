@@ -4,10 +4,11 @@ import argparse
 import os.path
 import sys
 import csv
-
+import itertools
 import parser
 import tools
 import utils
+
 
 def check_file_exists_or_die(file_name):
     if not os.path.isfile(file_name): 
@@ -25,22 +26,75 @@ def command_line_arguments():
     parser.add_argument("-p", "--parameters_for_tools", 
         help="parameters for different tools(by default search parameters.json file in current folder.)")
     parser.add_argument("-o", "--output", type=str, default="result.dat", help="long table of results.")
+    parser.add_argument("-path", required=True, type=str, help="Path to output directory.")
+
     args = parser.parse_args()
     check_file_exists_or_die(args.samples) 
     check_file_exists_or_die(args.tools) 
     return args
 
-def write_results(filename, results):
+def write_results(path,filename, results):
     """ write tool, sample, read_id, is_human to tab-separated file.
     """
-    writer = csv.writer(open(filename, 'w'), delimiter="\t")
+    writer = csv.writer(open(path + filename, 'w'), delimiter="\t")
     writer.writerow(["tool", "sample", "read_id", "is_human"])
-    writer.writerows(results)
-  
+    writer.writerows(results)                  
 
-if __name__=="__main__":
+def get_non_human_read_ids(results):
+    r_id = set()
+    for result in results:
+        (tool_name, name_sample, read_id, is_human) = result
+        if not is_human:
+            r_id.add(read_id)
+
+    return r_id
+
+def _grouper(iterable, n):
+    "Collect data into fixed-length chunks or blocks"
+    args = [iter(iterable)] * n
+    return itertools.izip(*args)
+
+
+def parse_fastq(f):
+    """ parse original fastq file and write new fastq file the filtered non-human reads.
+    """
+    for desc, seq, _, qual in _grouper(f, 4):
+        desc = desc.rstrip()[1:]
+        seq = seq.rstrip()
+        qual = qual.rstrip()
+        yield desc, seq, qual
+
+def write_fastq(out_fastq, desc, seq, qual):
+    out_fastq.write("@" + desc + "\n")
+    out_fastq.write(seq + "\n")
+    out_fastq.write("+\n")
+    out_fastq.write(qual + "\n")
+             
+
+def filter_fastq(in_fastq, out_fastq, r_id):
+    reads = parse_fastq(in_fastq)
+    for desc, seq, qual in reads:
+        if desc.split(" ")[0] in r_id:
+            write_fastq(out_fastq, desc, seq, qual)
+    in_fastq.close()
+    out_fastq.close()
+
+def filter_human_from_fastq(results, sample, path):
+    """ Get non-human read ids and filter fastq file for non-human reads.
+    """
+    (tool_name, name_sample, read_id, is_human) = results[0]
+    (sample_name, R1_fastq_file, R2_fastq_file) = sample
+
+    #get non-human read ids.
+    r_id = get_non_human_read_ids(results)
+    fname_r1 = path + tool_name + "_" + sample_name + "-R1.fastq"
+    fname_r2 = path + tool_name + "_" + sample_name + "-R2.fastq"
+    filter_fastq(open(R1_fastq_file), open(fname_r1, "w"), r_id)
+    filter_fastq(open(R2_fastq_file), open(fname_r2, "w"), r_id)
+    
+def main():
     args = command_line_arguments()
-
+    import tools
     tool_names = parser.parse_tool_names(open(args.tools)) 
     if args.parameters_for_tools:
         tool_parameters = tools.get_parameters_for_tools(args.parameters_for_tools)
@@ -67,7 +121,9 @@ if __name__=="__main__":
             tool_name = tool.name
             results_for_tool_sample = utils.add_tool_sample(tool_name, sample_name, human_annotation)
             results += results_for_tool_sample
-    write_results(args.output, results)
-             
- 
-    
+            filter_human_from_fastq(results_for_tool_sample, sample, args.path)
+    write_results(args.path, args.output, results)
+
+
+if __name__=="__main__":
+    main()
