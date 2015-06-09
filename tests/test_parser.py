@@ -1,7 +1,7 @@
 import unittest
 from cStringIO import StringIO
 
-from .. import parser
+from decontamlib import parser
 
 class Test_Tools(unittest.TestCase):
 
@@ -36,7 +36,6 @@ class  Test_Samples(unittest.TestCase):
         self.assertEqual(samples[0], ("name1", "fastq1", "fastq2"))
         self.assertEqual(samples[1], ("name2", "fastq3", "fastq4"))
 
-#class Test_Reads(unittest.TestCase):
-#
-#    def test_reads(self):
-#        self.assertTrue(False)
+
+if __name__ == "__main__":
+    unittest.main()
