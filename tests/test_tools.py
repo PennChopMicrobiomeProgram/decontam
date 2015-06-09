@@ -1,10 +1,7 @@
 import unittest
-import mock
-import tempfile
-import json
-from cStringIO import StringIO
 
 from .. import tools
+
 
 class Test_tools_creation(unittest.TestCase):
     def setUp(self):
