@@ -214,9 +214,6 @@ class Bmtagger(Bmfilter):
         
      
 class Blat(object):
-    def __init__(self, parameters):
-        self.index = parameters["index"]
-
     def get_human_annotation(self, R1, R2):
         mapped = self._extract_blat_hits(R1)
         mapped.update(self._extract_blat_hits(R2))
@@ -247,9 +244,6 @@ class Blat(object):
 
 
 class Bwa(_FilteringTool):
-    def __init__(self, parameters):
-        self.index = parameters["index"]
-
     def get_human_annotation(self, R1, R2):
         output = self._run_bwa(R1, R2)
         mapped = self._get_mapped_reads(output)
@@ -266,9 +260,6 @@ class Bwa(_FilteringTool):
 
 
 class Bowtie(_FilteringTool):
-    def __init__(self, index):
-        self.index = index
-
     def get_human_annotation(self, R1, R2):
         output = self._run_bowtie(R1, R2)
         mapped = self._get_mapped_reads(output)
