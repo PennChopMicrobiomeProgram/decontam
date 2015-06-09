@@ -28,7 +28,8 @@ def load_parameters(parameter_fp="parameters.json"):
     Raises:
         IOError if cannot find or parse file. 
     """
-    return json.load(open(parameter_fp))
+    with open(parameter_fp) as f:
+        return json.load(f)
 
 
 def create_tools(tool_names, tool_parameters):
