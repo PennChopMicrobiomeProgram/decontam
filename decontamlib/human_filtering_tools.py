@@ -22,6 +22,9 @@ def run_command(command, error_message):
 
 
 class _FilteringTool(object):
+    def __init__(self, index):
+        self.index = index
+
     def _get_mapped_reads(self, filename):
         """Extracts set of qnames from SAM file."""
 
@@ -56,7 +59,7 @@ class _FilteringTool(object):
         return mismatches
 
     def _get_pattern_sum(self, matched_pattern):
-        pattern_parsed = [ s[0:len(s)-1] for s in matched_pattern ]
+        pattern_parsed = [s[0:len(s)-1] for s in matched_pattern]
         return sum(map(int, pattern_parsed))
 
     def _calculate_alignment_length(self, cigar_str):
@@ -113,9 +116,6 @@ class _FilteringTool(object):
 
 
 class Snap(_FilteringTool):
-    def __init__(self, parameters):
-        self.index = parameters["index"]
-
     def get_human_annotation(self, R1, R2):
         output = self._run(R1, R2)
         mapped = self._get_mapped_reads(output)
@@ -132,8 +132,8 @@ class Snap(_FilteringTool):
 
 
 class Bmfilter(_FilteringTool):
-    def __init__(self, parameters):
-        self.bitmask = parameters["bitmask"] 
+    def __init__(self, bitmask):
+        self.bitmask = bitmask
 
     def get_human_annotation(self, R1, R2):
         """ creates human read annotation by running a tool.
@@ -176,9 +176,9 @@ class Bmfilter(_FilteringTool):
 
 
 class Bmtagger(Bmfilter):
-    def __init__(self, parameters):
-        self.bitmask = parameters["bitmask"] 
-        self.srprism = parameters["srprism"]
+    def __init__(self, bitmask, srprism):
+        self.bitmask = bitmask
+        self.srprism = srprism
 
     def get_human_annotation(self, R1, R2):
         """ creates human read annotation by running a tool.
@@ -266,8 +266,8 @@ class Bwa(_FilteringTool):
 
 
 class Bowtie(_FilteringTool):
-    def __init__(self, parameters):
-        self.index = parameters["index"]
+    def __init__(self, index):
+        self.index = index
 
     def get_human_annotation(self, R1, R2):
         output = self._run_bowtie(R1, R2)
@@ -285,9 +285,9 @@ class Bowtie(_FilteringTool):
 
 
 class Random_human:
-    def __init__(self, params):
-        assert 0.0 <= params["percent_human"] <= 100.0
-        self.fraction_human = params["percent_human"]/100.0
+    def __init__(self, percent_human):
+        assert 0.0 <= percent_human <= 100.0
+        self.fraction_human = percent_human / 100.0
 
     def get_human_annotation(self, R1, R2):
         ids = utils.parse_read_ids(R1)
@@ -295,7 +295,7 @@ class Random_human:
 
 
 class None_human:
-    def __init__(self, params):
+    def __init__(self):
         pass
 
     def get_human_annotation(self, R1, R2):
@@ -304,7 +304,7 @@ class None_human:
 
 
 class All_human:
-    def __init__(self, params):
+    def __init__(self):
         pass
 
     def get_human_annotation(self, R1, R2):

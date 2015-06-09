@@ -37,7 +37,7 @@ def create_tools(tool_names, tool_parameters):
     tools = []
     for tool_name in tool_names:
         tool_cls = tools_available[tool_name]
-        params = tool_parameters.get(tool_name, None)
-        tool = tool_cls(params)
+        params = tool_parameters.get(tool_name, {})
+        tool = tool_cls(**params)
         tools.append(tool)
     return tools
