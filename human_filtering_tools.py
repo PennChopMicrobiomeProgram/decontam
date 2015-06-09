@@ -90,19 +90,21 @@ class _FilteringTool(object):
         identities = []
 
         for cigar_str, mismatch in zip(cigar, mismatches):
-            #Calculate alignment length
-            alignment_length.append(self._calculate_alignment_length(cigar_str))
-
-            #Calculate number of identities (Matches from cigar string minus mismatches(XM : sam file))
+            alignment_length.append(
+                self._calculate_alignment_length(cigar_str))
             identities.append(self._calculate_identities(cigar_str, mismatch))
 
-        mapped = self._filter_mapped_reads(qname, self._calculate_pct_identity(identities, alignment_length), alignment_length)
+        mapped = self._filter_mapped_reads(
+            qname, self._calculate_pct_identity(identities, alignment_length),
+            alignment_length)
         return mapped
 
     def _calculate_pct_identity(self, identities, alignment_length):
         return [float(iden)/alen for iden, alen in zip(identities, alignment_length)]
 
-    def _filter_mapped_reads(self,qname, pct_identity, alignment_length,  pct_identity_threshold=0.5, alignment_length_threshold=100):
+    def _filter_mapped_reads(
+            self, qname, pct_identity, alignment_length, pct_identity_threshold=0.5,
+            alignment_length_threshold=100):
         mapped = set()
         for qn, pct, alen in zip(qname, pct_identity, alignment_length):
             if pct >= pct_identity_threshold and alen >= alignment_length_threshold :
@@ -112,8 +114,6 @@ class _FilteringTool(object):
 
 class Snap(_FilteringTool):
     def __init__(self, parameters):
-        if parameters is None or "index" not in parameters:
-            raise KeyError("parameter dictionary for snap should have key 'index'.")
         self.index = parameters["index"]
 
     def get_human_annotation(self, R1, R2):
@@ -133,8 +133,6 @@ class Snap(_FilteringTool):
 
 class Bmfilter(_FilteringTool):
     def __init__(self, parameters):
-        if parameters is None or "bitmask" not in parameters:
-            raise KeyError("parameter dictionary for Bmtagger should have key 'bitmask'.")
         self.bitmask = parameters["bitmask"] 
 
     def get_human_annotation(self, R1, R2):
@@ -183,8 +181,6 @@ class Bmfilter(_FilteringTool):
 
 class Bmtagger(Bmfilter):
     def __init__(self, parameters):
-        if parameters is None or "bitmask" not in parameters:
-            raise KeyError("parameter dictionary for Bmtagger should have key 'bitmask'.")
         self.bitmask = parameters["bitmask"] 
         self.srprism = parameters["srprism"]
 
@@ -223,8 +219,6 @@ class Bmtagger(Bmfilter):
      
 class Blat(object):
     def __init__(self, parameters):
-        if parameters is None or "index" not in parameters:
-            raise KeyError("parameter dictionary for blat should have key 'index'.")
         self.index = parameters["index"]
 
     def get_human_annotation(self, R1, R2):
@@ -258,17 +252,15 @@ class Blat(object):
 
 class Bwa(_FilteringTool):
     def __init__(self, parameters):
-        if parameters is None or "index" not in parameters:
-            raise KeyError("parameter dictionary for Bwa should have key 'index'.")
         self.index = parameters["index"]
-        
+
     def get_human_annotation(self, R1, R2):
         output = self._run_bwa(R1, R2)
         mapped = self._get_mapped_reads(output)
         os.remove(output)
         ids = utils.parse_read_ids(R1)
         return [(id, 1 if id in mapped else 0) for id in ids]
-                                      
+
     def _run_bwa(self, R1, R2):
         output = tempfile.NamedTemporaryFile(delete=False)
         command = ("bwa mem -M " + self.index + " " + R1 + " " + R2 +
@@ -279,8 +271,6 @@ class Bwa(_FilteringTool):
 
 class Bowtie(_FilteringTool):
     def __init__(self, parameters):
-        if parameters is None or "index" not in parameters:
-            raise KeyError("Bowtie requires parameter key/value 'index' : 'path to reference'.")
         self.index = parameters["index"]
 
     def get_human_annotation(self, R1, R2):
