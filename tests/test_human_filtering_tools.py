@@ -18,9 +18,9 @@ M03249:9:000000000-ABY6B:1:1101:11973:1857	H
 class Test_all_human(unittest.TestCase):
 
     def setUp(self):
-        parameters = { "bitmask" : "path"}     
+        parameters = {"bitmask": "path", "srprism": "path2"}
         self.bmtagger = Bmtagger(parameters)
-        self.human_annotation = self.bmtagger.parse_bmtagger_output((StringIO(bmtagger_output)))
+        self.human_annotation = self.bmtagger._parse_bmtagger_output((StringIO(bmtagger_output)))
 
     def test_parse_number_of_reads(self):
         self.assertEqual(len(self.human_annotation), 5) 

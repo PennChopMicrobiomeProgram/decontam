@@ -140,7 +140,7 @@ class Snap(tool):
         
 
 
-class Bmfilter():
+class Bmfilter(object):
 
     name = "bmfilter"
 
@@ -193,7 +193,7 @@ class Bmfilter():
         return human_annotation
 
 
-class Bmtagger():
+class Bmtagger(Bmfilter):
 
     name = "bmtagger"
 

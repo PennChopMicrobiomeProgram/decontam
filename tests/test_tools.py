@@ -15,7 +15,7 @@ class Test_tools_creation(unittest.TestCase):
     
     def setUp(self):
         self.sample_json_fh = StringIO(
-            '{"bmtagger" : {"bitmask" : "path"}, "bowtie" : {"index" : "path2"}, "random_human" : {"percent_human" : 30}}')        
+            '{"bmtagger" : {"bitmask" : "path", "srprism": "path2"}, "bowtie" : {"index" : "path2"}, "random_human" : {"percent_human" : 30}}')
         self.params = json.load(self.sample_json_fh)
 
     def test_empty_tool_names(self):
@@ -27,7 +27,7 @@ class Test_tools_creation(unittest.TestCase):
 
     def test_can_create_tools(self):
         tool_names = [ "bmtagger", "all_human", "none_human", "random_human", "bowtie" ]
-        tool_runners = tools.create_tools(tool_names, self.params) 
+        tool_runners = tools.create_tools(tool_names, self.params)
         self.assertEqual(len(tool_runners), len(tool_names))
         self.assertTrue(isinstance(tool_runners[0], Bmtagger))
         self.assertTrue(isinstance(tool_runners[1], All_human))
