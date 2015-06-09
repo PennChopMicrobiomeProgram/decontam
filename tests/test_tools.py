@@ -15,11 +15,13 @@ class Test_tools_creation(unittest.TestCase):
     
     def setUp(self):
         self.sample_json_fh = StringIO(
-            '{"bmtagger" : {"bitmask" : "path", "srprism": "path2"}, "bowtie" : {"index" : "path2"}, "random_human" : {"percent_human" : 30}}')
+            '{"bmtagger" : {"bitmask" : "path", "srprism": "path2"}, '
+            '"bowtie" : {"index" : "path2"}, '
+            '"random_human" : {"percent_human" : 30}}')
         self.params = json.load(self.sample_json_fh)
 
     def test_empty_tool_names(self):
-        self.assertRaises(ValueError, tools.create_tools, [], self.params)
+        self.assertEqual(tools.create_tools([], self.params), [])
 
     def test_unknown_tool(self):
         tool_names = ["unknown_and_never_existing_tool"]
@@ -47,7 +49,7 @@ class Test_parameter_file_default(unittest.TestCase):
         tools.json.load = self.real_function
 
     def test_read_json_default(self):
-        parameters = tools.get_parameters_for_tools()
+        parameters = tools.load_parameters()
         self.assertTrue(parameters["bmtagger_DEF"] is not None)
         self.assertTrue(parameters["bmtagger_DEF"]["bitmask_DEF"] is not None)
 
@@ -57,6 +59,6 @@ class Test_parameter_file(unittest.TestCase):
         sample_json = tempfile.NamedTemporaryFile()        
         sample_json.write('{"bmtagger" : {"bitmask" : "path"}}')        
         sample_json.seek(0)
-        parameters = tools.get_parameters_for_tools(sample_json.name)
+        parameters = tools.load_parameters(sample_json.name)
         self.assertTrue(parameters["bmtagger"] is not None)
         self.assertTrue(parameters["bmtagger"]["bitmask"] is not None)
