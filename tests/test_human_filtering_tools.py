@@ -1,7 +1,7 @@
 import unittest
 from cStringIO import StringIO
 
-from ..human_filtering_tools import Bmtagger
+from decontamlib.human_filtering_tools import Bmtagger
 
 
 bmtagger_output = """#read-id	#tag

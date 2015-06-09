@@ -1,6 +1,6 @@
 import unittest
 
-from .. import tools
+from decontamlib import tools
 
 
 class Test_tools_creation(unittest.TestCase):
