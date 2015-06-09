@@ -23,7 +23,7 @@ class Test_tools_creation(unittest.TestCase):
 
     def test_unknown_tool(self):
         tool_names = ["unknown_and_never_existing_tool"]
-        self.assertRaises(ValueError, tools.create_tools, tool_names, self.params)
+        self.assertRaises(KeyError, tools.create_tools, tool_names, self.params)
 
     def test_can_create_tools(self):
         tool_names = [ "bmtagger", "all_human", "none_human", "random_human", "bowtie" ]

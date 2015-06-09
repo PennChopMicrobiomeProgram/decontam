@@ -17,15 +17,15 @@ from human_filtering_tools import Bowtie
 """
 
 tools_available = {
-    Snap,
-    Blat,
-    Bwa,
-    Bmfilter,
-    Bmtagger,
-    All_human,
-    None_human, 
-    Random_human,
-    Bowtie
+    "snap": Snap,
+    "blat": Blat,
+    "bwa": Bwa,
+    "bmfilter": Bmfilter,
+    "bmtagger": Bmtagger,
+    "all_human": All_human,
+    "none_human": None_human,
+    "random_human": Random_human,
+    "bowtie": Bowtie,
 }
 
 def check_if_valid_tool(tool_name, toolname_to_runner):
@@ -65,15 +65,11 @@ def create_tools(tool_names, tool_parameters):
              ValueError if tool is not known
     """
     tools = []
-    toolname_to_runner = {tool.name : tool for tool in tools_available}
     if not tool_names:
         raise ValueError("empty tools list; need at least one tool")
     for tool_name in tool_names:
-        check_if_valid_tool(tool_name, toolname_to_runner)
-        try:
-            tools.append(toolname_to_runner[tool_name](tool_parameters.get(tool_name, None)))
-        except KeyError, message:
-            print "Cannot add: " + tool_name + " tool."
-            print "Some required parameters are not specified. Check parameters.json file."
-            print "Error message: " + str(message)
+        tool_cls = tools_available[tool_name]
+        params = tool_parameters.get(tool_name, None)
+        tool = tool_cls(params)
+        tools.append(tool)
     return tools
