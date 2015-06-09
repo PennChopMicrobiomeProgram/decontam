@@ -147,9 +147,9 @@ class Bmfilter(_FilteringTool):
                 length of list equal to number of read in the fastq files.
         """
         output = self._run(R1, R2)
-        read_classification = self._parse_bmtagger_output(open(output))
-        return read_classification
- 
+        read_classifications = self._parse_bmtagger_output(open(output))
+        return list(read_classifications)
+
     def _run(self, R1, R2):
         """ run bmtagger and return filename with the output file."""
         output = tempfile.NamedTemporaryFile()
@@ -158,25 +158,21 @@ class Bmfilter(_FilteringTool):
         run_command(command, "cannot run bmtagger. Check path to bitmask.")
         return output.name + ".tag"
 
-    def _encode_human(self, is_human):
-        """ bmtagger encodes human read as H we want 1 and 0 otherwise."""
-        return (1 if is_human == "H" else 0)
-
-    def _parse_bmtagger_output(self, output):
+    @staticmethod
+    def _parse_bmtagger_output(output):
         """ annotate each read.
         Args:
             output bmtagger tag file (as filehandle)
         """
-        human_annotation = []
         reader = csv.reader(output, delimiter="\t")
         reader.next() # skip header
         for row in reader:
             if len(row) != 2:
-                raise IOError("cannot process bmtagger output.")
-            (read_id, is_human) = row
-            is_human_encoded = self._encode_human(is_human)
-            human_annotation.append( (read_id, is_human_encoded) )
-        return human_annotation
+                raise ValueError(
+                    "Expected 2 fields in BmTagger output, saw %s" % len(row))
+            (read_id, annotation) = row
+            is_human = (annotation == "H")
+            yield (read_id, is_human)
 
 
 class Bmtagger(Bmfilter):
