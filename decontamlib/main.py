@@ -124,7 +124,7 @@ def human_filter_main(argv=None):
     write_results(args.path, args.output, results)
 
 
-def command_line_arguments():
+def command_line_arguments(argv):
     parser = argparse.ArgumentParser(
         description = "Makes index files for Bowtie2, Bwa, Blat and BMTagger.")
     parser.add_argument(
@@ -145,7 +145,7 @@ def command_line_arguments():
     parser.add_argument(
         "-bmtagger", required=False, type=int, default=0,
         help="Create index for bmtagger 1 or 0. Default:0")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     return args
 
 
@@ -179,7 +179,7 @@ def make_index_blat(genome, organism):
 
 
 def make_index_main(argv=None):
-    args = command_line_arguments()
+    args = command_line_arguments(argv)
     if args.bowtie:
         make_index_bowtie(args.g, args.o)
     if args.bwa:
