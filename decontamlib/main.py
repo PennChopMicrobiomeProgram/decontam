@@ -31,17 +31,6 @@ tools_available = {
 }
 
 
-def create_tools(tool_names, tool_parameters):
-    """Create tool instances from a list of tool names."""
-    tools = []
-    for tool_name in tool_names:
-        tool_cls = tools_available[tool_name]
-        params = tool_parameters.get(tool_name, {})
-        tool = tool_cls(**params)
-        tools.append(tool)
-    return tools
-
-
 def write_results(path, filename, results):
     """Write results to tab-separated file."""
     writer = csv.writer(open(path + filename, 'w'), delimiter="\t")
