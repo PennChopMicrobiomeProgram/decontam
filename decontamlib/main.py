@@ -1,12 +1,16 @@
 import argparse
+import collections
 import csv
 import itertools
+import json
 import os.path
 import subprocess
 import sys
 
-import decontamlib.parser
-import decontamlib.utils
+from decontamlib.version import __version__
+from decontamlib.parser import (
+    parse_tool_names,
+    )
 from decontamlib.human_filtering_tools import (
     Snap, Blat, Bwa, Bmfilter, Bmtagger,
     All_human, None_human, Random_human,
@@ -21,7 +25,7 @@ tools_available = {
     "bmfilter": Bmfilter,
     "bmtagger": Bmtagger,
     "all_human": All_human,
-    "none_human": None_human,
+    "no_human": None_human,
     "random_human": Random_human,
     "bowtie": Bowtie,
 }
@@ -101,55 +105,105 @@ def filter_human_from_fastq(results, sample, path):
 
 
 def human_filter_main(argv=None):
-    parser = argparse.ArgumentParser(
-        description="Run human filtering tools.")
-    parser.add_argument(
-        "-s", "--samples", required=True,
-        help="list of paired-end samples.")
-    parser.add_argument(
-        "-t", "--tools", required=True,
-        help="human filtering tools.")
-    parser.add_argument(
-        "-p", "--parameters_for_tools",
-        help=(
-            "parameters for different tools (by default search "
-            "parameters.json file in current folder.)"))
-    parser.add_argument(
-        "-o", "--output", default="result.dat",
+    p = argparse.ArgumentParser()
+    # Input
+    p.add_argument(
+        "--forward-reads", required=True,
+        type=argparse.FileType("r"),
+        help="FASTQ file of forward reads")
+    p.add_argument(
+        "--reverse-reads", required=True,
+        type=argparse.FileType("r"),
+        help="FASTQ file of reverse reads")
+    p.add_argument(
+        "--config-file",
+        type=argparse.FileType("r"),
+        help="JSON configuration file")
+    # Output
+    p.add_argument(
+        "--summary-file", required=True,
+        type=argparse.FileType("w"),
         help="long table of results.")
-    parser.add_argument(
-        "-path", required=True,
-        help="Path to output directory.")
-    args = parser.parse_args(argv)
+    p.add_argument(
+        "--output-dir", required=True,
+        help="Path to output directory")
+    args = p.parse_args(argv)
 
-    tool_names = parser.parse_tool_names(open(args.tools)) 
-    if args.parameters_for_tools:
-        tool_parameters = tools.get_parameters_for_tools(args.parameters_for_tools)
-    else:
-        tool_parameters = tools.get_parameters_for_tools()
-    tools = tools.create_tools(tool_names, tool_parameters)
+    config = json.load(args.config_file)
 
-    samples = parser.parse_samples(open(args.samples))
+    fwd_fp = args.forward_reads.name
+    rev_fp = args.reverse_reads.name
+    args.forward_reads.close()
+    args.reverse_reads.close()
 
-    results = []
+    tool_cls = tools_available[config["method"]]
+    tool = tool_cls()
 
-    for sample in samples:
-        (sample_name, R1_fastq_file, R2_fastq_file) = sample
+    if os.path.exists(args.output_dir):
+        p.error("Output directory already exists")
+    os.mkdir(args.output_dir)
 
-        R1_read_ids = utils.parse_read_ids(R1_fastq_file)
-        R2_read_ids = utils.parse_read_ids(R2_fastq_file)
-        if not utils.check_all_read_ids_are_consistent(R1_read_ids, R2_read_ids):
-            print "R1 and R2 file should have the same ids."
-            print "R1  file  " + R1_fastq_file + " R2 file " + R2_fastq_file + " are not consistent."
-            sys.exit(1)
+    annotations = tool.get_human_annotation(fwd_fp, rev_fp)
 
-        for tool in tools:
-            human_annotation = tool.get_human_annotation(R1_fastq_file, R2_fastq_file)
-            tool_name = tool.name
-            results_for_tool_sample = utils.add_tool_sample(tool_name, sample_name, human_annotation)
-            results += results_for_tool_sample
-            filter_human_from_fastq(results_for_tool_sample, sample, args.path)
-    write_results(args.path, args.output, results)
+    with open(fwd_fp) as f:
+        partition_fastq(f, annotations, args.output_dir)
+    with open(rev_fp) as f:
+        partition_fastq(f, annotations, args.output_dir)
+    summary_data = summarize_annotations(annotations)
+    save_summary(args.summary_file, config, summary_data)
+
+
+class SplitFastqWriter(object):
+    suffixes = {
+        True: "_human",
+        False: "",
+        }
+
+    def __init__(self, input_fp, output_dir):
+        self.output_dir = output_dir
+        input_filename = os.path.basename(input_fp)
+        self.input_root, self.input_ext = os.path.splitext(input_filename)
+        self._open_files = {}
+
+    def write(self, read, annotation):
+        desc, seq, qual = read
+        suffix = self.suffixes[annotation]
+        output_filename = self.input_root + suffix + self.input_ext
+        fp = os.path.join(self.output_dir, output_filename)
+        if fp not in self._open_files:
+            self._open_files[fp] = open(fp, "w")
+        f = self._open_files[fp]
+        write_fastq(f, desc, seq, qual)
+
+    def close(self):
+        for f in self._open_files.values():
+            f.close()
+
+
+def partition_fastq(f, annotations, output_dir):
+    open_files = {}
+    ids_to_annotation = dict(annotations)
+    input_filename = os.path.basename(f.name)
+    writer = SplitFastqWriter(f.name, output_dir)
+    for desc, seq, qual in parse_fastq(f):
+        read_id = desc.split(" ")[0]
+        annotation = ids_to_annotation[read_id]
+        writer.write((desc, seq, qual), annotation)
+    writer.close()
+
+
+def summarize_annotations(annotations):
+    return dict(collections.Counter(a for _, a in annotations))
+
+
+def save_summary(f, config, data):
+    result = {
+        "program": "decontam",
+        "version": __version__,
+        "config": config,
+        "data": data,
+        }
+    json.dump(result, f)
 
 
 def command_line_arguments(argv):

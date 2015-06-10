@@ -282,7 +282,9 @@ class Random_human:
 
     def get_human_annotation(self, R1, R2):
         ids = utils.parse_read_ids(R1)
-        return [(id, 1 if random.random() <= self.fraction_human else 0) for id in ids]
+        return [
+            (id, True if random.random() <= self.fraction_human else False)
+            for id in ids]
 
 
 class None_human:
@@ -291,7 +293,7 @@ class None_human:
 
     def get_human_annotation(self, R1, R2):
         ids = utils.parse_read_ids(R1)
-        return [(id, 0) for id in ids]
+        return [(id, False) for id in ids]
 
 
 class All_human:
@@ -300,4 +302,4 @@ class All_human:
 
     def get_human_annotation(self, R1, R2):
         ids = utils.parse_read_ids(R1)
-        return [(id, 1) for id in ids]
+        return [(id, True) for id in ids]
