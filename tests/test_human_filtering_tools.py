@@ -1,7 +1,9 @@
 import unittest
 from cStringIO import StringIO
 
-from decontamlib.human_filtering_tools import Bmtagger
+from decontamlib.human_filtering_tools import (
+    _FilteringTool, Bmtagger, None_human,
+    )
 
 
 bmtagger_output = """#read-id	#tag
@@ -32,3 +34,12 @@ class Test_all_human(unittest.TestCase):
         self.assertEqual(self.human_annotation[4][0], 
             "M03249:9:000000000-ABY6B:1:1101:11973:1857") 
         self.assertEqual(self.human_annotation[4][1], 1) 
+
+class FilteringToolTests(unittest.TestCase):
+    def test_get_args(self):
+        self.assertEqual(_FilteringTool.get_argnames(), ["index"])
+        self.assertEqual(None_human.get_argnames(), [])
+
+
+if __name__ == "__main__":
+    unittest.main()

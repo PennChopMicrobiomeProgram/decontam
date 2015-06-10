@@ -1,4 +1,5 @@
 import csv
+import inspect
 import os
 import random
 import re
@@ -24,6 +25,10 @@ def run_command(command, error_message):
 class _FilteringTool(object):
     def __init__(self, index):
         self.index = index
+
+    @classmethod
+    def get_argnames(cls):
+        return inspect.getargspec(cls.__init__)[0][1:]
 
     def _get_mapped_reads(self, filename):
         """Extracts set of qnames from SAM file."""
@@ -213,7 +218,7 @@ class Bmtagger(Bmfilter):
         return mapped
         
      
-class Blat(object):
+class Blat(_FilteringTool):
     def get_human_annotation(self, R1, R2):
         mapped = self._extract_blat_hits(R1)
         mapped.update(self._extract_blat_hits(R2))
@@ -260,6 +265,10 @@ class Bwa(_FilteringTool):
 
 
 class Bowtie(_FilteringTool):
+    def __init__(self, index, bowtie2_fp):
+        self.index = index
+        self.bowtie2_fp = bowtie2_fp
+
     def get_human_annotation(self, R1, R2):
         output = self._run_bowtie(R1, R2)
         mapped = self._get_mapped_reads(output)
@@ -269,13 +278,18 @@ class Bowtie(_FilteringTool):
 
     def _run_bowtie(self, R1, R2):
         output = tempfile.NamedTemporaryFile(delete=False)
-        command = ("bowtie2 --local --very-sensitive-local -1 " + R1 + " -2 " + R2 + 
-                " -x " + self.index + " -S " + output.name)
-        run_command(command, "cannot run bowtie2. Check path to index file.")
+        command = [
+            self.bowtie2_fp, "--local", "--very-sensitive-local",
+            "-1", R1, "-2", R2,
+            "-x", self.index, "-S", output.name]
+        stderr_file = tempfile.NamedTemporaryFile()
+        subprocess.check_call(command, stderr=stderr_file)
+        stderr_file.seek(0)
+        stderr = stderr_file.read()
         return output.name
 
 
-class Random_human:
+class Random_human(_FilteringTool):
     def __init__(self, percent_human):
         assert 0.0 <= percent_human <= 100.0
         self.fraction_human = percent_human / 100.0
@@ -287,7 +301,7 @@ class Random_human:
             for id in ids]
 
 
-class None_human:
+class None_human(_FilteringTool):
     def __init__(self):
         pass
 
@@ -296,7 +310,7 @@ class None_human:
         return [(id, False) for id in ids]
 
 
-class All_human:
+class All_human(_FilteringTool):
     def __init__(self):
         pass
 

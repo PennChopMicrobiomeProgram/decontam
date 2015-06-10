@@ -27,7 +27,7 @@ tools_available = {
     "all_human": All_human,
     "no_human": None_human,
     "random_human": Random_human,
-    "bowtie": Bowtie,
+    "bowtie2": Bowtie,
 }
 
 
@@ -93,6 +93,11 @@ def filter_human_from_fastq(results, sample, path):
     filter_fastq(open(R2_fastq_file), open(fname_r2, "w"), r_id)
 
 
+default_config = {
+    "method": "bowtie2",
+    "bowtie2_fp": "/home/kyle/software/bowtie2-2.2.5/bowtie2"
+    }
+
 def human_filter_main(argv=None):
     p = argparse.ArgumentParser()
     # Input
@@ -118,7 +123,10 @@ def human_filter_main(argv=None):
         help="Path to output directory")
     args = p.parse_args(argv)
 
-    config = json.load(args.config_file)
+    config = default_config.copy()
+    if args.config_file:
+        user_config = json.load(args.config_file)
+        config.update(user_config)
 
     fwd_fp = args.forward_reads.name
     rev_fp = args.reverse_reads.name
@@ -126,7 +134,12 @@ def human_filter_main(argv=None):
     args.reverse_reads.close()
 
     tool_cls = tools_available[config["method"]]
-    tool = tool_cls()
+    # Proceed stepwise here to improve quality of error messages.
+    tool_args = []
+    for argname in tool_cls.get_argnames():
+        arg = config[argname]
+        tool_args.append(arg)
+    tool = tool_cls(*tool_args)
 
     if os.path.exists(args.output_dir):
         p.error("Output directory already exists")
