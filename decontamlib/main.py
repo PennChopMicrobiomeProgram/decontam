@@ -5,9 +5,37 @@ import os.path
 import subprocess
 import sys
 
-import .parser
-import .tools
-import .utils
+import decontamlib.parser
+import decontamlib.utils
+from decontamlib.human_filtering_tools import (
+    Snap, Blat, Bwa, Bmfilter, Bmtagger,
+    All_human, None_human, Random_human,
+    Bowtie,
+    )
+
+
+tools_available = {
+    "snap": Snap,
+    "blat": Blat,
+    "bwa": Bwa,
+    "bmfilter": Bmfilter,
+    "bmtagger": Bmtagger,
+    "all_human": All_human,
+    "none_human": None_human,
+    "random_human": Random_human,
+    "bowtie": Bowtie,
+}
+
+
+def create_tools(tool_names, tool_parameters):
+    """Create tool instances from a list of tool names."""
+    tools = []
+    for tool_name in tool_names:
+        tool_cls = tools_available[tool_name]
+        params = tool_parameters.get(tool_name, {})
+        tool = tool_cls(**params)
+        tools.append(tool)
+    return tools
 
 
 def write_results(path, filename, results):
