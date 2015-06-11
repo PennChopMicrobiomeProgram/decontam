@@ -8,27 +8,7 @@ import subprocess
 import sys
 
 from decontamlib.version import __version__
-from decontamlib.parser import (
-    parse_tool_names,
-    )
-from decontamlib.human_filtering_tools import (
-    Snap, Blat, Bwa, Bmfilter, Bmtagger,
-    All_human, None_human, Random_human,
-    Bowtie,
-    )
-
-
-tools_available = {
-    "snap": Snap,
-    "blat": Blat,
-    "bwa": Bwa,
-    "bmfilter": Bmfilter,
-    "bmtagger": Bmtagger,
-    "all_human": All_human,
-    "no_human": None_human,
-    "random_human": Random_human,
-    "bowtie2": Bowtie,
-}
+from decontamlib.human_filtering_tools import FilteringTool
 
 
 def write_results(path, filename, results):
@@ -45,38 +25,6 @@ def get_non_human_read_ids(results):
         if not is_human:
             r_id.add(read_id)
     return r_id
-
-
-def _grouper(iterable, n):
-    "Collect data into fixed-length chunks or blocks"
-    args = [iter(iterable)] * n
-    return itertools.izip(*args)
-
-
-def parse_fastq(f):
-    """ parse original fastq file and write new fastq file the filtered non-human reads.
-    """
-    for desc, seq, _, qual in _grouper(f, 4):
-        desc = desc.rstrip()[1:]
-        seq = seq.rstrip()
-        qual = qual.rstrip()
-        yield desc, seq, qual
-
-
-def write_fastq(out_fastq, desc, seq, qual):
-    out_fastq.write("@" + desc + "\n")
-    out_fastq.write(seq + "\n")
-    out_fastq.write("+\n")
-    out_fastq.write(qual + "\n")
-             
-
-def filter_fastq(in_fastq, out_fastq, r_id):
-    reads = parse_fastq(in_fastq)
-    for desc, seq, qual in reads:
-        if desc.split(" ")[0] in r_id:
-            write_fastq(out_fastq, desc, seq, qual)
-    in_fastq.close()
-    out_fastq.close()
 
 
 def filter_human_from_fastq(results, sample, path):
@@ -133,69 +81,14 @@ def human_filter_main(argv=None):
     args.forward_reads.close()
     args.reverse_reads.close()
 
-    tool_cls = tools_available[config["method"]]
-    # Proceed stepwise here to improve quality of error messages.
-    tool_args = []
-    for argname in tool_cls.get_argnames():
-        arg = config[argname]
-        tool_args.append(arg)
-    tool = tool_cls(*tool_args)
+    tool = FilteringTool(config)
 
     if os.path.exists(args.output_dir):
         p.error("Output directory already exists")
     os.mkdir(args.output_dir)
 
-    annotations = tool.annotate(fwd_fp, rev_fp)
-
-    with open(fwd_fp) as f:
-        partition_fastq(f, annotations, args.output_dir)
-    with open(rev_fp) as f:
-        partition_fastq(f, annotations, args.output_dir)
-    summary_data = summarize_annotations(annotations)
+    summary_data = tool.decontaminate(fwd_fp, rev_fp, args.output_dir)
     save_summary(args.summary_file, config, summary_data)
-
-
-class SplitFastqWriter(object):
-    suffixes = {
-        True: "_human",
-        False: "",
-        }
-
-    def __init__(self, input_fp, output_dir):
-        self.output_dir = output_dir
-        input_filename = os.path.basename(input_fp)
-        self.input_root, self.input_ext = os.path.splitext(input_filename)
-        self._open_files = {}
-
-    def write(self, read, annotation):
-        desc, seq, qual = read
-        suffix = self.suffixes[annotation]
-        output_filename = self.input_root + suffix + self.input_ext
-        fp = os.path.join(self.output_dir, output_filename)
-        if fp not in self._open_files:
-            self._open_files[fp] = open(fp, "w")
-        f = self._open_files[fp]
-        write_fastq(f, desc, seq, qual)
-
-    def close(self):
-        for f in self._open_files.values():
-            f.close()
-
-
-def partition_fastq(f, annotations, output_dir):
-    open_files = {}
-    ids_to_annotation = dict(annotations)
-    input_filename = os.path.basename(f.name)
-    writer = SplitFastqWriter(f.name, output_dir)
-    for desc, seq, qual in parse_fastq(f):
-        read_id = desc.split(" ")[0]
-        annotation = ids_to_annotation[read_id]
-        writer.write((desc, seq, qual), annotation)
-    writer.close()
-
-
-def summarize_annotations(annotations):
-    return dict(collections.Counter(a for _, a in annotations))
 
 
 def save_summary(f, config, data):

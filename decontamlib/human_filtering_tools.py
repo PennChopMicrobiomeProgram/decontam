@@ -1,5 +1,7 @@
+import collections
 import csv
 import inspect
+import itertools
 import os
 import random
 import re
@@ -22,6 +24,27 @@ def run_command(command, error_message):
         print e.stderr
 
 
+def FilteringTool(config):
+    tools_available = {
+        "snap": Snap,
+        "blat": Blat,
+        "bwa": Bwa,
+        "bmfilter": Bmfilter,
+        "bmtagger": Bmtagger,
+        "all_human": All_human,
+        "no_human": None_human,
+        "random_human": Random_human,
+        "bowtie2": Bowtie,
+    }
+    tool_cls = tools_available[config["method"]]
+    # Proceed stepwise here to improve quality of error messages.
+    tool_args = []
+    for argname in tool_cls.get_argnames():
+        arg = config[argname]
+        tool_args.append(arg)
+    return tool_cls(*tool_args)
+
+
 class _FilteringTool(object):
     def __init__(self, index):
         self.index = index
@@ -29,6 +52,15 @@ class _FilteringTool(object):
     @classmethod
     def get_argnames(cls):
         return inspect.getargspec(cls.__init__)[0][1:]
+
+    def decontaminate(self, fwd_fp, rev_fp, output_dir):
+        annotations = self.annotate(fwd_fp, rev_fp)
+        with open(fwd_fp) as f:
+            partition_fastq(f, annotations, output_dir)
+        with open(rev_fp) as f:
+            partition_fastq(f, annotations, output_dir)
+        summary_data = summarize_annotations(annotations)
+        return summary_data
 
     def _get_mapped_reads(self, filename):
         """Extracts set of qnames from SAM file."""
@@ -317,3 +349,78 @@ class All_human(_FilteringTool):
     def annotate(self, R1, R2):
         ids = utils.parse_read_ids(R1)
         return [(id, True) for id in ids]
+
+
+class SplitFastqWriter(object):
+    suffixes = {
+        True: "_human",
+        False: "",
+        }
+
+    def __init__(self, input_fp, output_dir):
+        self.output_dir = output_dir
+        input_filename = os.path.basename(input_fp)
+        self.input_root, self.input_ext = os.path.splitext(input_filename)
+        self._open_files = {}
+
+    def write(self, read, annotation):
+        desc, seq, qual = read
+        suffix = self.suffixes[annotation]
+        output_filename = self.input_root + suffix + self.input_ext
+        fp = os.path.join(self.output_dir, output_filename)
+        if fp not in self._open_files:
+            self._open_files[fp] = open(fp, "w")
+        f = self._open_files[fp]
+        write_fastq(f, desc, seq, qual)
+
+    def close(self):
+        for f in self._open_files.values():
+            f.close()
+
+
+def partition_fastq(f, annotations, output_dir):
+    open_files = {}
+    ids_to_annotation = dict(annotations)
+    input_filename = os.path.basename(f.name)
+    writer = SplitFastqWriter(f.name, output_dir)
+    for desc, seq, qual in parse_fastq(f):
+        read_id = desc.split(" ")[0]
+        annotation = ids_to_annotation[read_id]
+        writer.write((desc, seq, qual), annotation)
+    writer.close()
+
+
+def _grouper(iterable, n):
+    "Collect data into fixed-length chunks or blocks"
+    args = [iter(iterable)] * n
+    return itertools.izip(*args)
+
+
+def parse_fastq(f):
+    """ parse original fastq file and write new fastq file the filtered non-human reads.
+    """
+    for desc, seq, _, qual in _grouper(f, 4):
+        desc = desc.rstrip()[1:]
+        seq = seq.rstrip()
+        qual = qual.rstrip()
+        yield desc, seq, qual
+
+
+def write_fastq(out_fastq, desc, seq, qual):
+    out_fastq.write("@" + desc + "\n")
+    out_fastq.write(seq + "\n")
+    out_fastq.write("+\n")
+    out_fastq.write(qual + "\n")
+
+
+def filter_fastq(in_fastq, out_fastq, r_id):
+    reads = parse_fastq(in_fastq)
+    for desc, seq, qual in reads:
+        if desc.split(" ")[0] in r_id:
+            write_fastq(out_fastq, desc, seq, qual)
+    in_fastq.close()
+    out_fastq.close()
+
+
+def summarize_annotations(annotations):
+    return dict(collections.Counter(a for _, a in annotations))
