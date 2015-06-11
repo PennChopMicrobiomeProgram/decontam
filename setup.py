@@ -13,5 +13,5 @@ setup(
     author_email='kylebittinger@gmail.com',
     url='https://github.com/PennChopMicrobiomeProgram',
     packages=['decontamlib'],
-    scripts=['scripts/anti_human.py', 'scripts/make_index.py'],
+    scripts=['scripts/decontaminate.py', 'scripts/make_index.py'],
     )
