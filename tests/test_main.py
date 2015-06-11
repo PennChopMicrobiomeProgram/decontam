@@ -93,8 +93,6 @@ class HumanFilterMainTests(unittest.TestCase):
         for fp in self.output_fps["nonhuman"]:
             self.assertTrue(os.path.exists(fp))
 
-        with open(self.summary_fp) as f:
-            print(f.read())
 
 if __name__ == "__main__":
     unittest.main()
