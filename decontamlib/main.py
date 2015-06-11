@@ -145,7 +145,7 @@ def human_filter_main(argv=None):
         p.error("Output directory already exists")
     os.mkdir(args.output_dir)
 
-    annotations = tool.get_human_annotation(fwd_fp, rev_fp)
+    annotations = tool.annotate(fwd_fp, rev_fp)
 
     with open(fwd_fp) as f:
         partition_fastq(f, annotations, args.output_dir)

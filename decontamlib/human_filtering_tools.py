@@ -121,7 +121,7 @@ class _FilteringTool(object):
 
 
 class Snap(_FilteringTool):
-    def get_human_annotation(self, R1, R2):
+    def annotate(self, R1, R2):
         output = self._run(R1, R2)
         mapped = self._get_mapped_reads(output)
         os.remove(output)
@@ -140,7 +140,7 @@ class Bmfilter(_FilteringTool):
     def __init__(self, bitmask):
         self.bitmask = bitmask
 
-    def get_human_annotation(self, R1, R2):
+    def annotate(self, R1, R2):
         """ creates human read annotation by running a tool.
             Args:
                 R1, R2 forward and reverese reads
@@ -185,7 +185,7 @@ class Bmtagger(Bmfilter):
         self.bitmask = bitmask
         self.srprism = srprism
 
-    def get_human_annotation(self, R1, R2):
+    def annotate(self, R1, R2):
         """ creates human read annotation by running a tool.
             Args:
                 R1, R2 forward and reverese reads
@@ -219,7 +219,7 @@ class Bmtagger(Bmfilter):
         
      
 class Blat(_FilteringTool):
-    def get_human_annotation(self, R1, R2):
+    def annotate(self, R1, R2):
         mapped = self._extract_blat_hits(R1)
         mapped.update(self._extract_blat_hits(R2))
         ids = utils.parse_read_ids(R1)
@@ -249,7 +249,7 @@ class Blat(_FilteringTool):
 
 
 class Bwa(_FilteringTool):
-    def get_human_annotation(self, R1, R2):
+    def annotate(self, R1, R2):
         output = self._run_bwa(R1, R2)
         mapped = self._get_mapped_reads(output)
         os.remove(output)
@@ -269,7 +269,7 @@ class Bowtie(_FilteringTool):
         self.index = index
         self.bowtie2_fp = bowtie2_fp
 
-    def get_human_annotation(self, R1, R2):
+    def annotate(self, R1, R2):
         output = self._run_bowtie(R1, R2)
         mapped = self._get_mapped_reads(output)
         os.remove(output)
@@ -294,7 +294,7 @@ class Random_human(_FilteringTool):
         assert 0.0 <= percent_human <= 100.0
         self.fraction_human = percent_human / 100.0
 
-    def get_human_annotation(self, R1, R2):
+    def annotate(self, R1, R2):
         ids = utils.parse_read_ids(R1)
         return [
             (id, True if random.random() <= self.fraction_human else False)
@@ -305,7 +305,7 @@ class None_human(_FilteringTool):
     def __init__(self):
         pass
 
-    def get_human_annotation(self, R1, R2):
+    def annotate(self, R1, R2):
         ids = utils.parse_read_ids(R1)
         return [(id, False) for id in ids]
 
@@ -314,6 +314,6 @@ class All_human(_FilteringTool):
     def __init__(self):
         pass
 
-    def get_human_annotation(self, R1, R2):
+    def annotate(self, R1, R2):
         ids = utils.parse_read_ids(R1)
         return [(id, True) for id in ids]
