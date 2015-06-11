@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 # Get version number from package
-exec(open('dnabclib/version.py').read())
+exec(open('decontamlib/version.py').read())
 
 setup(
     name='decontam',
