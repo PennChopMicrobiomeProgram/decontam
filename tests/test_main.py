@@ -88,7 +88,7 @@ class HumanFilterMainTests(unittest.TestCase):
         main.human_filter_main(self.args)
 
         for fp in self.output_fps["human"]:
-            self.assertFalse(os.path.exists(fp))
+            self.assertTrue(os.path.exists(fp))
 
         for fp in self.output_fps["nonhuman"]:
             self.assertTrue(os.path.exists(fp))

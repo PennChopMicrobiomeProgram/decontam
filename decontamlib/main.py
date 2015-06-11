@@ -95,7 +95,7 @@ def filter_human_from_fastq(results, sample, path):
 
 default_config = {
     "method": "bowtie2",
-    "bowtie2_fp": "/home/kyle/software/bowtie2-2.2.5/bowtie2"
+    "bowtie2_fp": "/home/kyle/software/bowtie2-2.2.5/bowtie2",
     }
 
 def human_filter_main(argv=None):
