@@ -274,7 +274,7 @@ class Bowtie(_FilteringTool):
         mapped = self._get_mapped_reads(output)
         os.remove(output)
         ids = utils.parse_read_ids(R1)
-        return [(id, 1 if id in mapped else 0) for id in ids]
+        return [(id, True if id in mapped else False) for id in ids]
 
     def _run_bowtie(self, R1, R2):
         output = tempfile.NamedTemporaryFile(delete=False)
