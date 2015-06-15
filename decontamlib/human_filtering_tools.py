@@ -55,10 +55,10 @@ class _FilteringTool(object):
 
     def decontaminate(self, fwd_fp, rev_fp, output_dir):
         annotations = self.annotate(fwd_fp, rev_fp)
-        with open(fwd_fp) as f:
-            partition_fastq(f, annotations, output_dir)
-        with open(rev_fp) as f:
-            partition_fastq(f, annotations, output_dir)
+        with FastqSplitter(fwd_fp, output_dir) as s:
+            s.partition(annotations)
+        with FastqSplitter(rev_fp, output_dir) as s:
+            s.partition(annotations)
         summary_data = summarize_annotations(annotations)
         return summary_data
 
@@ -351,7 +351,7 @@ class All_human(_FilteringTool):
         return [(id, True) for id in ids]
 
 
-class SplitFastqWriter(object):
+class FastqSplitter(object):
     suffixes = {
         True: "_human",
         False: "",
@@ -359,11 +359,26 @@ class SplitFastqWriter(object):
 
     def __init__(self, input_fp, output_dir):
         self.output_dir = output_dir
+        self.input_fp = input_fp
         input_filename = os.path.basename(input_fp)
         self.input_root, self.input_ext = os.path.splitext(input_filename)
         self._open_files = {}
 
-    def write(self, read, annotation):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, tb):
+        self.close()
+
+    def partition(self, annotations):
+        ids_to_annotation = dict(annotations)
+        with open(self.input_fp) as f:
+            for desc, seq, qual in parse_fastq(f):
+                read_id = desc.split()[0]
+                annotation = ids_to_annotation[read_id]
+                self._write((desc, seq, qual), annotation)
+
+    def _write(self, read, annotation):
         desc, seq, qual = read
         suffix = self.suffixes[annotation]
         output_filename = self.input_root + suffix + self.input_ext
@@ -376,18 +391,6 @@ class SplitFastqWriter(object):
     def close(self):
         for f in self._open_files.values():
             f.close()
-
-
-def partition_fastq(f, annotations, output_dir):
-    open_files = {}
-    ids_to_annotation = dict(annotations)
-    input_filename = os.path.basename(f.name)
-    writer = SplitFastqWriter(f.name, output_dir)
-    for desc, seq, qual in parse_fastq(f):
-        read_id = desc.split(" ")[0]
-        annotation = ids_to_annotation[read_id]
-        writer.write((desc, seq, qual), annotation)
-    writer.close()
 
 
 def _grouper(iterable, n):
@@ -411,15 +414,6 @@ def write_fastq(out_fastq, desc, seq, qual):
     out_fastq.write(seq + "\n")
     out_fastq.write("+\n")
     out_fastq.write(qual + "\n")
-
-
-def filter_fastq(in_fastq, out_fastq, r_id):
-    reads = parse_fastq(in_fastq)
-    for desc, seq, qual in reads:
-        if desc.split(" ")[0] in r_id:
-            write_fastq(out_fastq, desc, seq, qual)
-    in_fastq.close()
-    out_fastq.close()
 
 
 def summarize_annotations(annotations):

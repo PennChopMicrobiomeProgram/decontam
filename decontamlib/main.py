@@ -11,36 +11,6 @@ from decontamlib.version import __version__
 from decontamlib.human_filtering_tools import FilteringTool
 
 
-def write_results(path, filename, results):
-    """Write results to tab-separated file."""
-    writer = csv.writer(open(path + filename, 'w'), delimiter="\t")
-    writer.writerow(["tool", "sample", "read_id", "is_human"])
-    writer.writerows(results)                  
-
-
-def get_non_human_read_ids(results):
-    r_id = set()
-    for result in results:
-        (tool_name, name_sample, read_id, is_human) = result
-        if not is_human:
-            r_id.add(read_id)
-    return r_id
-
-
-def filter_human_from_fastq(results, sample, path):
-    """ Get non-human read ids and filter fastq file for non-human reads.
-    """
-    (tool_name, name_sample, read_id, is_human) = results[0]
-    (sample_name, R1_fastq_file, R2_fastq_file) = sample
-
-    #get non-human read ids.
-    r_id = get_non_human_read_ids(results)
-    fname_r1 = path + tool_name + "_" + sample_name + "-R1.fastq"
-    fname_r2 = path + tool_name + "_" + sample_name + "-R2.fastq"
-    filter_fastq(open(R1_fastq_file), open(fname_r1, "w"), r_id)
-    filter_fastq(open(R2_fastq_file), open(fname_r2, "w"), r_id)
-
-
 default_config = {
     "method": "bowtie2",
     "bowtie2_fp": "/home/kyle/software/bowtie2-2.2.5/bowtie2",
