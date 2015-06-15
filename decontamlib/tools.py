@@ -49,6 +49,12 @@ class _FilteringTool(object):
                 mapped.add(qname)
         return mapped
 
+    def make_index(self):
+        raise NotImplementedError()
+
+    def index_exists(self):
+        return True
+
 
 class Bwa(_FilteringTool):
     def __init__(self, index, bwa_fp):
@@ -71,6 +77,13 @@ class Bwa(_FilteringTool):
         subprocess.check_call(command, stdout=stdout_file, stderr=stderr_file)
         return (stdout_file, stderr_file)
 
+    def make_index(self):
+        cmd = [self.bwa_fp, "index", self.index]
+        return subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+
+    def index_exists(self):
+        return os.path.exists(self.index + ".amb")
+
 
 class Bowtie(Bwa):
     def __init__(self, index, bowtie2_fp):
@@ -82,6 +95,15 @@ class Bowtie(Bwa):
             self.bowtie2_fp, "--local", "--very-sensitive-local",
             "-1", fwd_fp, "-2", rev_fp,
             "-x", self.index]
+
+    def make_index(self):
+        build_fp = self.bowtie2_fp + "-build"
+        cmd = [build_fp, "-f", self.index, self.index]
+        return subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+
+    def index_exists(self):
+        index_fp = self.index + ".1.bt2"
+        return os.path.exists(index_fp)
 
 
 class Random_human(_FilteringTool):
