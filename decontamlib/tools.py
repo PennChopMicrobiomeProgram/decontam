@@ -14,13 +14,6 @@ from decontamlib.fastq import FastqSplitter
 from decontamlib.sam import get_mapped_reads
 
 
-def run_command(command, error_message):
-    try:
-        subprocess.check_call(command, shell=True)
-    except subprocess.CalledProcessError as e:
-        print e.stderr
-
-
 def FilteringTool(config):
     tool_cls = tools_available[config["method"]]
     # Proceed stepwise here to improve quality of error messages.
