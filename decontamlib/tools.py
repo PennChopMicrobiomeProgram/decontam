@@ -41,6 +41,9 @@ class _FilteringTool(object):
         summary_data = summarize_annotations(annotations)
         return summary_data
 
+    def annotate(self, fwd_fp, rev_fp):
+        raise NotImplementedError()
+
     def _get_mapped_reads(self, filename):
         """Extracts set of qnames from SAM file."""
         mapped = set()
@@ -65,7 +68,7 @@ class Bwa(_FilteringTool):
         sam_file, stderr_file = self._run(R1, R2)
         mapped = self._get_mapped_reads(sam_file.name)
         ids = utils.parse_read_ids(R1)
-        return [(id, 1 if id in mapped else 0) for id in ids]
+        return [(id, True if id in mapped else False) for id in ids]
 
     def _command(self, fwd_fp, rev_fp):
         return [self.bwa_fp, "mem", "-M", self.index, fwd_fp, rev_fp]
