@@ -14,4 +14,5 @@ setup(
     url='https://github.com/PennChopMicrobiomeProgram',
     packages=['decontamlib'],
     scripts=['scripts/decontaminate.py', 'scripts/make_index.py'],
+    install_requires=["pysam"],
     )
