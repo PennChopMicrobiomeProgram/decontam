@@ -80,7 +80,7 @@ def make_index_main(argv=None):
         "--config-file",
         type=argparse.FileType("r"),
         help="JSON configuration file")
-    args = parser.parse_args(argv)
+    args = p.parse_args(argv)
 
     config = default_config.copy()
     if args.config_file:
