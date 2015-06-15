@@ -28,17 +28,6 @@ def run_command(command, error_message):
 
 
 def FilteringTool(config):
-    tools_available = {
-        "snap": Snap,
-        "blat": Blat,
-        "bwa": Bwa,
-        "bmfilter": Bmfilter,
-        "bmtagger": Bmtagger,
-        "all_human": All_human,
-        "no_human": None_human,
-        "random_human": Random_human,
-        "bowtie2": Bowtie,
-    }
     tool_cls = tools_available[config["method"]]
     # Proceed stepwise here to improve quality of error messages.
     tool_args = []
@@ -153,134 +142,6 @@ class _FilteringTool(object):
         return mapped               
 
 
-class Snap(_FilteringTool):
-    def annotate(self, R1, R2):
-        output = self._run(R1, R2)
-        mapped = self._get_mapped_reads(output)
-        os.remove(output)
-        ids = utils.parse_read_ids(R1)
-        return [(id, 1 if id in mapped else 0) for id in ids]
-
-    def _run(self, R1, R2):
-        output = tempfile.NamedTemporaryFile(delete=False)
-        command = ("snap paired " + self.index + " " + R1 + " " + R2 +
-            "  -o -sam " +  output.name)
-        run_command(command, "cannot run snap. Check path to index file.")
-        return output.name
-
-
-class Bmfilter(_FilteringTool):
-    def __init__(self, bitmask):
-        self.bitmask = bitmask
-
-    def annotate(self, R1, R2):
-        """ creates human read annotation by running a tool.
-            Args:
-                R1, R2 forward and reverese reads
-            Returns:
-                list of tuples, each tuple is a pair of: read_id and is_human
-                is_human = 1 if read annotated as human read
-                is_human = 0 if read annotated as NON human read
-                (so in R sum(is_human) is number of reads annotated as human reads`)
-                length of list equal to number of read in the fastq files.
-        """
-        output = self._run(R1, R2)
-        read_classifications = self._parse_bmtagger_output(open(output))
-        return list(read_classifications)
-
-    def _run(self, R1, R2):
-        """ run bmtagger and return filename with the output file."""
-        output = tempfile.NamedTemporaryFile()
-        command = ("bmfilter -1 " + R1 + " -2 " + R2 + " -q 1 -T" + 
-                " -b " + self.bitmask + " -o " + output.name)
-        run_command(command, "cannot run bmtagger. Check path to bitmask.")
-        return output.name + ".tag"
-
-    @staticmethod
-    def _parse_bmtagger_output(output):
-        """ annotate each read.
-        Args:
-            output bmtagger tag file (as filehandle)
-        """
-        reader = csv.reader(output, delimiter="\t")
-        reader.next() # skip header
-        for row in reader:
-            if len(row) != 2:
-                raise ValueError(
-                    "Expected 2 fields in BmTagger output, saw %s" % len(row))
-            (read_id, annotation) = row
-            is_human = (annotation == "H")
-            yield (read_id, is_human)
-
-
-class Bmtagger(Bmfilter):
-    def __init__(self, bitmask, srprism):
-        self.bitmask = bitmask
-        self.srprism = srprism
-
-    def annotate(self, R1, R2):
-        """ creates human read annotation by running a tool.
-            Args:
-                R1, R2 forward and reverese reads
-            Returns:
-                list of tuples, each tuple is a pair of: read_id and is_human
-                is_human = 1 if read annotated as human read
-                is_human = 0 if read annotated as NON human read
-                (so in R sum(is_human) is number of reads annotated as human reads`)
-                length of list equal to number of read in the fastq files.
-        """
-        output = self._run_bmtagger(R1, R2)
-        mapped = self._read_classification(open(output))
-        ids = utils.parse_read_ids(R1)
-        return [(id, 1 if id in mapped else 0) for id in ids]
-
-    def _run_bmtagger(self, R1, R2):
-        output = tempfile.NamedTemporaryFile(delete=False)
-        tmp = tempfile.mkdtemp()
-        command = ("/media/THING1/kyle/1205_PLEASE/bmtagger.sh -b " + self.bitmask + " -x " +
-                   self.srprism + " -1 " + R1 + " -2 " + R2 + " -q 1 -T " + tmp + " -o " +
-                   output.name)
-        run_command(command, "cannot run bmtagger. Check path to bitmask.")
-        shutil.rmtree(tmp)
-        return output.name
-
-    def _read_classification(self, out):
-        mapped = set()
-        for line in out:
-            mapped.add(line.rstrip())
-        return mapped
-        
-     
-class Blat(_FilteringTool):
-    def annotate(self, R1, R2):
-        mapped = self._extract_blat_hits(R1)
-        mapped.update(self._extract_blat_hits(R2))
-        ids = utils.parse_read_ids(R1)
-        return [(id, 1 if id in mapped else 0) for id in ids]
-
-    def _extract_blat_hits(self, fastq_file):
-        fasta = self.fastq_to_fasta(fastq_file)
-        blat_psl = self.run_blat(fasta)
-        blat_psl.seek(0)
-        mapped = utils.extract_column(blat_psl, 10, 5)
-        os.remove(blat_psl.name)
-        os.remove(fasta)
-        return mapped
-
-    def _fastq_to_fasta(self, filename):
-        fasta = tempfile.NamedTemporaryFile(delete=False)
-        command = ("seqtk seq -a  " + filename + " > " + fasta.name)
-        run_command(command, "cannot run seqtk for blat.")
-        return fasta.name
-
-    def _run_blat(self, R):
-        output = tempfile.NamedTemporaryFile(delete=False)
-        command = ("blat -minScore=50 -fastMap "+ self.index + " " + R +
-                    " " +  output.name)
-        run_command(command, "cannot run blat. Check path to index file.")
-        return output
-
-
 class Bwa(_FilteringTool):
     def __init__(self, index, bwa_fp):
         self.index = index
@@ -345,7 +206,14 @@ class All_human(_FilteringTool):
         return [(id, True) for id in ids]
 
 
-
-
 def summarize_annotations(annotations):
     return dict(collections.Counter(a for _, a in annotations))
+
+
+tools_available = {
+    "bwa": Bwa,
+    "all_human": All_human,
+    "no_human": None_human,
+    "random_human": Random_human,
+    "bowtie2": Bowtie,
+}
