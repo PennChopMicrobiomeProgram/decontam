@@ -11,13 +11,7 @@ import utils
 
 
 from decontamlib.fastq import FastqSplitter
-
-
-#compile regex to save time
-hard = re.compile("\d+H")
-soft = re.compile("\d+S")
-all_cigar = re.compile("\D")
-matches = re.compile("\d+M")
+from decontamlib.sam import get_mapped_reads
 
 
 def run_command(command, error_message):
@@ -56,90 +50,11 @@ class _FilteringTool(object):
 
     def _get_mapped_reads(self, filename):
         """Extracts set of qnames from SAM file."""
-        QNAME = tempfile.NamedTemporaryFile(delete=False)
-        command = ("samtools view -F 4 " + filename + " > " + QNAME.name)
-        run_command(command, "cannot run samtools view.")
-        qname = utils.get_column(QNAME, 1)
-        cigar = utils.get_column(QNAME, 6)
-        mismatches = self._parse_mismatches_from_lists(
-            utils.get_multiple_columns(QNAME, [12,13,14,15]))
-        mapped = self._get_mapped_reads_from_cigar(qname, cigar, mismatches)
-        os.remove(QNAME.name)
-        return mapped
-
-    def _get_mismatch(self, mismatch):
-        return int(mismatch.split(":")[2])
-
-    def _has_mismatch(self, x):
-        return x.startswith("XM:i:")
-
-    def _parse_mismatches_from_lists(self, cols):
-        """Parse mismatch from variaous misc. column in sam file (XM:i:*)"""
-        mismatches = []
-        for row in cols:
-            for x in row:
-                if self._has_mismatch(x):
-                    mismatches.append(self._get_mismatch(x))
-                    break
-            else:
-                mismatches.append(0)
-        return mismatches
-
-    def _get_pattern_sum(self, matched_pattern):
-        pattern_parsed = [s[0:len(s)-1] for s in matched_pattern]
-        return sum(map(int, pattern_parsed))
-
-    def _calculate_alignment_length(self, cigar_str):
-        """Calculate alignment length from cigar string."""
-        all = all_cigar.split(cigar_str)
-        sum_all = sum(map(int, all[0:len(all)-1]))
-
-        #Remove soft/hard clipped nucleotides from alignment length
-        sum_soft_clip = 0
-        sum_hard_clip = 0
-
-        if  soft.match(cigar_str):
-            sum_soft_clip = self._get_pattern_sum(soft.findall(cigar_str))
-
-        elif hard.match(cigar_str):
-            sum_hard_clip = self._get_pattern_sum(hard.findall(cigar_str))
-
-        return sum_all - sum_soft_clip - sum_hard_clip
-
-    def _calculate_identities(self, cigar_str, mismatch):
-        """Calculate number of identities from cigar str.
-
-        Equal to matches from cigar string minus mismatches (XM field in
-        sam file).
-        """
-        sum_match = self._get_pattern_sum(matches.findall(cigar_str))
-        return sum_match - mismatch
-
-    def _get_mapped_reads_from_cigar(self, qname, cigar, mismatches):
-        alignment_length = []
-        identities = []
-
-        for cigar_str, mismatch in zip(cigar, mismatches):
-            alignment_length.append(
-                self._calculate_alignment_length(cigar_str))
-            identities.append(self._calculate_identities(cigar_str, mismatch))
-
-        mapped = self._filter_mapped_reads(
-            qname, self._calculate_pct_identity(identities, alignment_length),
-            alignment_length)
-        return mapped
-
-    def _calculate_pct_identity(self, identities, alignment_length):
-        return [float(iden)/alen for iden, alen in zip(identities, alignment_length)]
-
-    def _filter_mapped_reads(
-            self, qname, pct_identity, alignment_length, pct_identity_threshold=0.5,
-            alignment_length_threshold=100):
         mapped = set()
-        for qn, pct, alen in zip(qname, pct_identity, alignment_length):
-            if pct >= pct_identity_threshold and alen >= alignment_length_threshold :
-                mapped.add(qn)
-        return mapped               
+        for qname, is_read1, rname in get_mapped_reads(filename):
+            if rname is not None:
+                mapped.add(qname)
+        return mapped
 
 
 class Bwa(_FilteringTool):
