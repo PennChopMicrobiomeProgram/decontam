@@ -67,7 +67,6 @@ class _FilteringTool(object):
 
     def _get_mapped_reads(self, filename):
         """Extracts set of qnames from SAM file."""
-
         QNAME = tempfile.NamedTemporaryFile(delete=False)
         command = ("samtools view -F 4 " + filename + " > " + QNAME.name)
         run_command(command, "cannot run samtools view.")
@@ -75,7 +74,6 @@ class _FilteringTool(object):
         cigar = utils.get_column(QNAME, 6)
         mismatches = self._parse_mismatches_from_lists(
             utils.get_multiple_columns(QNAME, [12,13,14,15]))
-
         mapped = self._get_mapped_reads_from_cigar(qname, cigar, mismatches)
         os.remove(QNAME.name)
         return mapped
@@ -284,44 +282,37 @@ class Blat(_FilteringTool):
 
 
 class Bwa(_FilteringTool):
+    def __init__(self, index, bwa_fp):
+        self.index = index
+        self.bwa_fp = bwa_fp
+
     def annotate(self, R1, R2):
-        output = self._run_bwa(R1, R2)
-        mapped = self._get_mapped_reads(output)
-        os.remove(output)
+        sam_file, stderr_file = self._run(R1, R2)
+        mapped = self._get_mapped_reads(sam_file.name)
         ids = utils.parse_read_ids(R1)
         return [(id, 1 if id in mapped else 0) for id in ids]
 
-    def _run_bwa(self, R1, R2):
-        output = tempfile.NamedTemporaryFile(delete=False)
-        command = ("bwa mem -M " + self.index + " " + R1 + " " + R2 +
-            " > " +  output.name)
-        run_command(command, "cannot run bwa. Check path to index file.")
-        return output.name
+    def _command(self, fwd_fp, rev_fp):
+        return [self.bwa_fp, "mem", "-M", self.index, fwd_fp, rev_fp]
+
+    def _run(self, R1, R2):
+        stdout_file = tempfile.NamedTemporaryFile()
+        stderr_file = tempfile.NamedTemporaryFile()
+        command = self._command(R1, R2)
+        subprocess.check_call(command, stdout=stdout_file, stderr=stderr_file)
+        return (stdout_file, stderr_file)
 
 
-class Bowtie(_FilteringTool):
+class Bowtie(Bwa):
     def __init__(self, index, bowtie2_fp):
         self.index = index
         self.bowtie2_fp = bowtie2_fp
 
-    def annotate(self, R1, R2):
-        output = self._run_bowtie(R1, R2)
-        mapped = self._get_mapped_reads(output)
-        os.remove(output)
-        ids = utils.parse_read_ids(R1)
-        return [(id, True if id in mapped else False) for id in ids]
-
-    def _run_bowtie(self, R1, R2):
-        output = tempfile.NamedTemporaryFile(delete=False)
-        command = [
+    def _command(self, fwd_fp, rev_fp):
+        return [
             self.bowtie2_fp, "--local", "--very-sensitive-local",
-            "-1", R1, "-2", R2,
-            "-x", self.index, "-S", output.name]
-        stderr_file = tempfile.NamedTemporaryFile()
-        subprocess.check_call(command, stderr=stderr_file)
-        stderr_file.seek(0)
-        stderr = stderr_file.read()
-        return output.name
+            "-1", fwd_fp, "-2", rev_fp,
+            "-x", self.index]
 
 
 class Random_human(_FilteringTool):

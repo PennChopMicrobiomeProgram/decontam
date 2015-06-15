@@ -14,6 +14,7 @@ from decontamlib.tools import FilteringTool
 default_config = {
     "method": "bowtie2",
     "bowtie2_fp": "/home/kyle/software/bowtie2-2.2.5/bowtie2",
+    "bwa_fp": "/home/kyle/software/bwa-0.7.12/bwa",
     }
 
 def human_filter_main(argv=None):

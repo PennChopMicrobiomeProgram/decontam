@@ -94,6 +94,22 @@ class HumanFilterMainTests(unittest.TestCase):
             self.assertTrue(os.path.exists(fp))
 
 
+    def test_bwa(self):
+        index_fp = os.path.join(data_dir, "fakehuman")
+        config_file = tempfile.NamedTemporaryFile(suffix=".json")
+        json.dump({"method": "bwa", "index": index_fp}, config_file)
+        config_file.seek(0)
+        self.args.extend(["--config-file", config_file.name])
+
+        main.human_filter_main(self.args)
+
+        for fp in self.output_fps["human"]:
+            self.assertTrue(os.path.exists(fp))
+
+        for fp in self.output_fps["nonhuman"]:
+            self.assertTrue(os.path.exists(fp))
+
+
 if __name__ == "__main__":
     unittest.main()
 
