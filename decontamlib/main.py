@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 from decontamlib.version import __version__
-from decontamlib.human_filtering_tools import FilteringTool
+from decontamlib.tools import FilteringTool
 
 
 default_config = {

@@ -1,7 +1,7 @@
 import unittest
 from cStringIO import StringIO
 
-from decontamlib.human_filtering_tools import (
+from decontamlib.tools import (
     _FilteringTool, Bmtagger, None_human,
     )
 
