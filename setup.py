@@ -13,6 +13,6 @@ setup(
     author_email='kylebittinger@gmail.com',
     url='https://github.com/PennChopMicrobiomeProgram',
     packages=['decontamlib'],
-    scripts=['scripts/decontaminate.py', 'scripts/make_index.py'],
+    scripts=['scripts/decontaminate.py', 'scripts/make_index.py', 'scripts/preprocess_report.py'],
     install_requires=["pysam"],
     )
