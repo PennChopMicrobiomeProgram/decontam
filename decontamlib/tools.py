@@ -71,7 +71,7 @@ class Bwa(_FilteringTool):
         return [(id, True if id in mapped else False) for id in ids]
 
     def _command(self, fwd_fp, rev_fp):
-        return [self.bwa_fp, "mem", "-M", self.index, fwd_fp, rev_fp]
+        return [self.bwa_fp, "mem", "-M", "-t", "8", self.index, fwd_fp, rev_fp]
 
     def _run(self, R1, R2):
         stdout_file = tempfile.NamedTemporaryFile()
