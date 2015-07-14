@@ -56,9 +56,8 @@ def human_filter_main(argv=None):
     if not tool.index_exists():
         tool.make_index()
 
-    if os.path.exists(args.output_dir):
-        p.error("Output directory already exists")
-    os.mkdir(args.output_dir)
+    if not os.path.exists(args.output_dir):
+        os.mkdir(args.output_dir)
 
     summary_data = tool.decontaminate(fwd_fp, rev_fp, args.output_dir)
     save_summary(args.summary_file, config, summary_data)
