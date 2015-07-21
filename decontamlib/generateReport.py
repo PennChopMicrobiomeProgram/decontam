@@ -16,7 +16,7 @@ def makeReport(illqc_summary_dir, decontam_summary_dir, output_fp):
 
     with open(output_fp, 'wb') as f_out:
         writer = csv.writer(f_out, delimiter='\t')
-        writer.writerow(['Sample'] + illqc_header + ['human', 'non human'])
+        writer.writerow(['Sample'] + [s.replace(" ", "_") for s in illqc_header] + ['human', 'non_human'])
         
         for file in glob.glob(os.path.join(illqc_summary_dir, "*.json")):
             file = os.path.basename(file)
