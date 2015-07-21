@@ -4,7 +4,7 @@ import glob
 import csv
 import argparse
 
-def makeReport(illqc_summary_dir, decontam_summary_dir, output_fp):
+def makeReport(illqc_summary_dir, decontam_summary_dir, output_fp, illqc_prefix, decontam_prefix):
     """
     Compiles the summary files for individual samples into one tsv file
     :param illqc_summary_dir: path to the directory where all the illqc json files are located
@@ -18,16 +18,18 @@ def makeReport(illqc_summary_dir, decontam_summary_dir, output_fp):
         writer = csv.writer(f_out, delimiter='\t')
         writer.writerow(['Sample'] + [s.replace(" ", "_") for s in illqc_header] + ['human', 'non_human'])
         
-        for file in glob.glob(os.path.join(illqc_summary_dir, "*.json")):
-            file = os.path.basename(file)
+        for file in glob.glob(os.path.join(illqc_summary_dir, illqc_prefix + '*')):
+            sample = file.rsplit(illqc_prefix)[1]
             
-            ill = getValues(os.path.join(illqc_summary_dir, file), illqc_header)
-            de = getValues(os.path.join(decontam_summary_dir, file), decontam_header)
+            ill = getValues(build_summary_fn(illqc_summary_dir, illqc_prefix, sample), illqc_header)
+            de = getValues(build_summary_fn(decontam_summary_dir, decontam_prefix, sample), decontam_header)
                 
             ill.extend(de)
-            ill.insert(0, file.rsplit('_', 1)[0])
+            ill.insert(0, sample)
             writer.writerow(ill)
 
+def build_summary_fn(summ_dir, prefix, sample):
+    return os.path.join(summ_dir, prefix + sample)
 
 def getValues(fp, headers):
     """
@@ -52,10 +54,14 @@ def main(argv=None):
                    help="Directory for illqc summary files")
     p.add_argument("--decontam-dir", required=True,
                    help="Direcrory for decontamination summary files")
+    p.add_argument("--illqc-prefix", default="summary-illqc_",
+                   help="Prefix of the illqc summary files")
+    p.add_argument("--decontam-prefix", default="summary-decontam_",
+                   help="Prefix of the decontam summary files")
 
     # output
     p.add_argument("--output-fp", required=True,
                    help="Output report file")
     args=p.parse_args(argv)
     
-    makeReport(args.illqc_dir, args.decontam_dir, args.output_fp)
+    makeReport(args.illqc_dir, args.decontam_dir, args.output_fp, args.illqc_prefix, args.decontam_prefix)
