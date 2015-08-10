@@ -4,10 +4,30 @@ import shutil
 import tempfile
 import unittest
 
-from decontamlib import main
+from decontamlib.main import (
+    human_filter_main, get_config,
+)
 
 
 data_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data")
+
+
+class ConfigTests(unittest.TestCase):
+        def setUp(self):
+            self.temp_home_dir = tempfile.mkdtemp()
+            self._old_home_dir = os.environ['HOME']
+            os.environ['HOME'] = self.temp_home_dir
+
+        def tearDown(self):
+            shutil.rmtree(self.temp_home_dir)
+            os.environ['HOME'] = self._old_home_dir
+
+        def test_default_config_locataion(self):
+            """Config file in user home dir should be read and used"""
+            with open(os.path.join(self.temp_home_dir, ".decontam.json"), "w") as f:
+                f.write('{"method": "SOMECRAZYVALUE"}')
+            config = get_config(None)
+            self.assertEqual(config["method"], u"SOMECRAZYVALUE")
 
 
 class HumanFilterMainTests(unittest.TestCase):
@@ -42,7 +62,7 @@ class HumanFilterMainTests(unittest.TestCase):
         config_file.seek(0)
         self.args.extend(["--config-file", config_file.name])
 
-        main.human_filter_main(self.args)
+        human_filter_main(self.args)
 
         with open(self.summary_fp) as f:
             obs_summary = json.load(f)
@@ -63,7 +83,7 @@ class HumanFilterMainTests(unittest.TestCase):
         config_file.seek(0)
         self.args.extend(["--config-file", config_file.name])
 
-        main.human_filter_main(self.args)
+        human_filter_main(self.args)
 
         with open(self.summary_fp) as f:
             obs_summary = json.load(f)
@@ -85,7 +105,7 @@ class HumanFilterMainTests(unittest.TestCase):
         config_file.seek(0)
         self.args.extend(["--config-file", config_file.name])
 
-        main.human_filter_main(self.args)
+        human_filter_main(self.args)
 
         for fp in self.output_fps["human"]:
             self.assertTrue(os.path.exists(fp))
@@ -101,7 +121,7 @@ class HumanFilterMainTests(unittest.TestCase):
         config_file.seek(0)
         self.args.extend(["--config-file", config_file.name])
 
-        main.human_filter_main(self.args)
+        human_filter_main(self.args)
 
         for fp in self.output_fps["human"]:
             self.assertTrue(os.path.exists(fp))

@@ -45,7 +45,7 @@ def parse_read_ids(fastq_filename):
     for record in records:
         ids.add(record)
     return ids
-    
+
 
 def check_all_read_ids_are_consistent(id1, id2):
     """ check if ids are the same.

@@ -11,11 +11,23 @@ from decontamlib.version import __version__
 from decontamlib.tools import FilteringTool
 
 
-default_config = {
-    "method": "bowtie2",
-    "bowtie2_fp": "bowtie2",
-    "bwa_fp":"bwa"
+def get_config(user_config_file):
+    config = {
+        "method": "bowtie2",
+        "bowtie2_fp": "bowtie2",
+        "bwa_fp":"bwa"
     }
+
+    if user_config_file is None:
+        default_user_config_fp = os.path.expanduser("~/.decontam.json")
+        if os.path.exists(default_user_config_fp):
+            user_config_file = open(default_user_config_fp)
+
+    if user_config_file is not None:
+        user_config = json.load(user_config_file)
+        config.update(user_config)
+    return config
+
 
 def human_filter_main(argv=None):
     p = argparse.ArgumentParser()
@@ -42,10 +54,7 @@ def human_filter_main(argv=None):
         help="Path to output directory")
     args = p.parse_args(argv)
 
-    config = default_config.copy()
-    if args.config_file:
-        user_config = json.load(args.config_file)
-        config.update(user_config)
+    config = get_config(args.config_file)
 
     fwd_fp = args.forward_reads.name
     rev_fp = args.reverse_reads.name
