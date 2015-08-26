@@ -44,6 +44,9 @@ def human_filter_main(argv=None):
         "--config-file",
         type=argparse.FileType("r"),
         help="JSON configuration file")
+    p.add_argument(
+        "--organism", required=True,
+        help="reference organism to filter from")
     # Output
     p.add_argument(
         "--summary-file", required=True,
@@ -68,7 +71,7 @@ def human_filter_main(argv=None):
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
 
-    summary_data = tool.decontaminate(fwd_fp, rev_fp, args.output_dir)
+    summary_data = tool.decontaminate(fwd_fp, rev_fp, args.output_dir, args.organism)
     save_summary(args.summary_file, config, summary_data)
 
 

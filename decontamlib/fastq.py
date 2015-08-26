@@ -2,8 +2,12 @@ import itertools
 import os
 
 class FastqSplitter(object):
-    suffixes = {
+    suffixes_human = {
         True: "_human",
+        False: "",
+        }
+    suffixes_phix = {
+        True: "_phix",
         False: "",
         }
 
@@ -20,17 +24,20 @@ class FastqSplitter(object):
     def __exit__(self, type, value, tb):
         self.close()
 
-    def partition(self, annotations):
+    def partition(self, annotations, organism):
         ids_to_annotation = dict(annotations)
         with open(self.input_fp) as f:
             for desc, seq, qual in parse_fastq(f):
                 read_id = desc.split()[0]
                 annotation = ids_to_annotation[read_id]
-                self._write((desc, seq, qual), annotation)
+                self._write((desc, seq, qual), annotation, organism)
 
-    def _write(self, read, annotation):
+    def _write(self, read, annotation, organism):
         desc, seq, qual = read
-        suffix = self.suffixes[annotation]
+        if organism == "human":
+            suffix = self.suffixes_human[annotation]
+        elif organism == "phix":
+            suffix = self.suffixes_phix[annotation]
         output_filename = self.input_root + suffix + self.input_ext
         fp = os.path.join(self.output_dir, output_filename)
         if fp not in self._open_files:
