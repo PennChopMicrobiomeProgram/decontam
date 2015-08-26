@@ -24,9 +24,9 @@ class ConfigTests(unittest.TestCase):
 
         def test_default_config_locataion(self):
             """Config file in user home dir should be read and used"""
-            with open(os.path.join(self.temp_home_dir, ".decontam.json"), "w") as f:
+            with open(os.path.join(self.temp_home_dir, ".decontam_human.json"), "w") as f:
                 f.write('{"method": "SOMECRAZYVALUE"}')
-            config = get_config(None)
+            config = get_config(None, "human")
             self.assertEqual(config["method"], u"SOMECRAZYVALUE")
 
 
