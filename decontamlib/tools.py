@@ -32,12 +32,12 @@ class _FilteringTool(object):
     def get_argnames(cls):
         return inspect.getargspec(cls.__init__)[0][1:]
 
-    def decontaminate(self, fwd_fp, rev_fp, output_dir):
+    def decontaminate(self, fwd_fp, rev_fp, output_dir, organism):
         annotations = self.annotate(fwd_fp, rev_fp)
         with FastqSplitter(fwd_fp, output_dir) as s:
-            s.partition(annotations)
+            s.partition(annotations, organism)
         with FastqSplitter(rev_fp, output_dir) as s:
-            s.partition(annotations)
+            s.partition(annotations, organism)
         summary_data = summarize_annotations(annotations)
         return summary_data
 

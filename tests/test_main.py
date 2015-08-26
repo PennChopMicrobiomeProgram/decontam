@@ -24,9 +24,9 @@ class ConfigTests(unittest.TestCase):
 
         def test_default_config_locataion(self):
             """Config file in user home dir should be read and used"""
-            with open(os.path.join(self.temp_home_dir, ".decontam.json"), "w") as f:
+            with open(os.path.join(self.temp_home_dir, ".decontam_human.json"), "w") as f:
                 f.write('{"method": "SOMECRAZYVALUE"}')
-            config = get_config(None)
+            config = get_config(None, "human")
             self.assertEqual(config["method"], u"SOMECRAZYVALUE")
 
 
@@ -37,11 +37,13 @@ class HumanFilterMainTests(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.output_dir = os.path.join(self.temp_dir, "output")
         self.summary_fp = os.path.join(self.temp_dir, "summary.json")
+	self.org = "human"
         self.args = [
             "--forward-reads", self.fwd_fp,
             "--reverse-reads", self.rev_fp,
             "--output-dir", self.output_dir,
             "--summary-file", self.summary_fp,
+	    "--organism", self.org,
             ]
         self.output_fps = {
             "nonhuman": ("B5_short_R1.fastq", "B5_short_R2.fastq"),

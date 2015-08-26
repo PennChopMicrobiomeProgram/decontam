@@ -11,7 +11,7 @@ from decontamlib.version import __version__
 from decontamlib.tools import FilteringTool
 
 
-def get_config(user_config_file):
+def get_config(user_config_file, organism):
     config = {
         "method": "bowtie2",
         "bowtie2_fp": "bowtie2",
@@ -19,7 +19,10 @@ def get_config(user_config_file):
     }
 
     if user_config_file is None:
-        default_user_config_fp = os.path.expanduser("~/.decontam.json")
+        if organism == "human":
+            default_user_config_fp = os.path.expanduser("~/.decontam_human.json")
+        elif organism == "phix":
+            default_user_config_fp = os.path.expanduser("~/.decontam_phix.json")
         if os.path.exists(default_user_config_fp):
             user_config_file = open(default_user_config_fp)
 
@@ -44,6 +47,9 @@ def human_filter_main(argv=None):
         "--config-file",
         type=argparse.FileType("r"),
         help="JSON configuration file")
+    p.add_argument(
+        "--organism", required=True,
+        help="reference organism to filter from")
     # Output
     p.add_argument(
         "--summary-file", required=True,
@@ -54,7 +60,7 @@ def human_filter_main(argv=None):
         help="Path to output directory")
     args = p.parse_args(argv)
 
-    config = get_config(args.config_file)
+    config = get_config(args.config_file, args.organism)
 
     fwd_fp = args.forward_reads.name
     rev_fp = args.reverse_reads.name
@@ -68,7 +74,7 @@ def human_filter_main(argv=None):
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
 
-    summary_data = tool.decontaminate(fwd_fp, rev_fp, args.output_dir)
+    summary_data = tool.decontaminate(fwd_fp, rev_fp, args.output_dir, args.organism)
     save_summary(args.summary_file, config, summary_data)
 
 
@@ -85,11 +91,10 @@ def save_summary(f, config, data):
 def make_index_main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument(
-        "--config-file",
+        "--config-file", required=True,
         type=argparse.FileType("r"),
         help="JSON configuration file")
     args = p.parse_args(argv)
-
     config = default_config.copy()
     if args.config_file:
         user_config = json.load(args.config_file)
