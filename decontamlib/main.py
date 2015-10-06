@@ -1,3 +1,4 @@
+
 import argparse
 import collections
 import csv
@@ -34,6 +35,7 @@ def get_config(user_config_file, organism):
 
 def human_filter_main(argv=None):
     p = argparse.ArgumentParser()
+
     # Input
     p.add_argument(
         "--forward-reads", required=True,
@@ -50,6 +52,15 @@ def human_filter_main(argv=None):
     p.add_argument(
         "--organism", required=True,
         help="reference organism to filter from")
+    p.add_argument(
+        "--pct", required=False,
+        type=float, default=0.5,
+        help="Percent identity Default: 0.5")
+    p.add_argument(
+        "--frac", required=False,
+        type=float, default=0.6,
+        help="Fraction of alignment length Default: 0.6")
+   
     # Output
     p.add_argument(
         "--summary-file", required=True,
@@ -74,7 +85,8 @@ def human_filter_main(argv=None):
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
 
-    summary_data = tool.decontaminate(fwd_fp, rev_fp, args.output_dir, args.organism)
+    summary_data = tool.decontaminate(fwd_fp, rev_fp, args.output_dir,
+                                      args.organism, args.pct, args.frac)
     save_summary(args.summary_file, config, summary_data)
 
 
