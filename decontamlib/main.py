@@ -13,7 +13,7 @@ from decontamlib.tools import FilteringTool
 
 def get_config(user_config_file, organism):
     config = {
-        "method": "bowtie2",
+        "method": "bwa",
         "bowtie2_fp": "bowtie2",
         "bwa_fp":"bwa"
     }

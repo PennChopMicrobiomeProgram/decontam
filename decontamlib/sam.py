@@ -1,11 +1,11 @@
 import pysam
 
-def get_mapped_reads(fp, min_pct_id=0.5, min_len=100):
+def get_mapped_reads(fp, min_pct_id=0.5, min_len_frac=0.6):
     sam = pysam.AlignmentFile(fp)
     for read in sam:
         if read.is_unmapped:
             yield (read.query_name, read.is_read1, None)
-        elif read.query_alignment_length < min_len:
+        elif _get_frac(read) < min_len_frac:
             yield (read.query_name, read.is_read1, None)
         else:
             pct_id = _get_pct_identity(read)
@@ -23,3 +23,12 @@ def _get_pct_identity(read):
         edit_dist = 0
     pct_mm = float(edit_dist) / read.alen
     return 1 - pct_mm 
+
+def _get_frac(read):
+    cigar = read.cigartuples
+    clip = 0
+    for pair in cigar:
+        if pair[0] == 4 or pair[0] == 5:
+            clip = clip + pair[1]
+    frac = float(read.query_alignment_length)/(read.query_alignment_length + clip)
+    return frac
