@@ -15,7 +15,8 @@ def get_config(user_config_file, organism):
     config = {
         "method": "bowtie2",
         "bowtie2_fp": "bowtie2",
-        "bwa_fp":"bwa"
+        "bwa_fp":"bwa",
+        "num_threads":8
     }
 
     if user_config_file is None:
