@@ -65,7 +65,7 @@ class Bwa(_FilteringTool):
         self.bwa_fp = bwa_fp
         self.num_threads = num_threads
         
-    def annotate(self, R1, R2):
+    def annotate(self, R1, R2, pct, frac):
         sam_file, stderr_file = self._run(R1, R2)
         mapped = self._get_mapped_reads(sam_file.name, pct, frac)
         ids = utils.parse_read_ids(R1)
