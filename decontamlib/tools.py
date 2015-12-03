@@ -60,10 +60,11 @@ class _FilteringTool(object):
 
 
 class Bwa(_FilteringTool):
-    def __init__(self, index, bwa_fp):
+    def __init__(self, index, bwa_fp, num_threads):
         self.index = index
         self.bwa_fp = bwa_fp
-
+        self.num_threads = num_threads
+        
     def annotate(self, R1, R2, pct, frac):
         sam_file, stderr_file = self._run(R1, R2)
         mapped = self._get_mapped_reads(sam_file.name, pct, frac)
@@ -71,7 +72,7 @@ class Bwa(_FilteringTool):
         return [(id, True if id in mapped else False) for id in ids]
 
     def _command(self, fwd_fp, rev_fp):
-        return [self.bwa_fp, "mem", "-M", "-t", "8", self.index, fwd_fp, rev_fp]
+        return [self.bwa_fp, "mem", "-M", "-t", str(self.num_threads), self.index, fwd_fp, rev_fp]
 
     def _run(self, R1, R2):
         stdout_file = tempfile.NamedTemporaryFile()
