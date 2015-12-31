@@ -21,7 +21,7 @@ def get_config(user_config_file, organism):
     }
 
     if user_config_file is None:
-        if organism == "human":
+        if organism == "host":
             default_user_config_fp = os.path.expanduser("~/.decontam_human.json")
         elif organism == "phix":
             default_user_config_fp = os.path.expanduser("~/.decontam_phix.json")
