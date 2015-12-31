@@ -107,12 +107,12 @@ def make_index_main(argv=None):
         "--config-file", required=True,
         type=argparse.FileType("r"),
         help="JSON configuration file")
+    p.add_argument(
+        "--organism", required=True,
+        help="reference organism to filter from")
     args = p.parse_args(argv)
-    config = default_config.copy()
-    if args.config_file:
-        user_config = json.load(args.config_file)
-        config.update(user_config)
-
+    config = get_config(args.config_file, args.organism)
+    
     tool = FilteringTool(config)
 
     if not tool.index_exists():
