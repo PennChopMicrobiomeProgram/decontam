@@ -2,8 +2,8 @@ import itertools
 import os
 
 class FastqSplitter(object):
-    suffixes_human = {
-        True: "_human",
+    suffixes_host = {
+        True: "_host",
         False: "",
         }
     suffixes_phix = {
@@ -34,8 +34,8 @@ class FastqSplitter(object):
 
     def _write(self, read, annotation, organism):
         desc, seq, qual = read
-        if organism == "human":
-            suffix = self.suffixes_human[annotation]
+        if organism == "host":
+            suffix = self.suffixes_host[annotation]
         elif organism == "phix":
             suffix = self.suffixes_phix[annotation]
         output_filename = self.input_root + suffix + self.input_ext
@@ -57,7 +57,7 @@ def _grouper(iterable, n):
 
 
 def parse_fastq(f):
-    """ parse original fastq file and write new fastq file the filtered non-human reads.
+    """ parse original fastq file and write new fastq file the filtered non-host reads.
     """
     for desc, seq, _, qual in _grouper(f, 4):
         desc = desc.rstrip()[1:]
