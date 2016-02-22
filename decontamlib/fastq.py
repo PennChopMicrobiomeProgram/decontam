@@ -2,8 +2,8 @@ import itertools
 import os
 
 class FastqSplitter(object):
-    suffixes_host = {
-        True: "_host",
+    suffixes_human = {
+        True: "_human",
         False: "",
         }
     suffixes_phix = {
@@ -34,8 +34,8 @@ class FastqSplitter(object):
 
     def _write(self, read, annotation, organism):
         desc, seq, qual = read
-        if organism == "host":
-            suffix = self.suffixes_host[annotation]
+        if organism == "human":
+            suffix = self.suffixes_human[annotation]
         elif organism == "phix":
             suffix = self.suffixes_phix[annotation]
         output_filename = self.input_root + suffix + self.input_ext
