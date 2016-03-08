@@ -59,6 +59,16 @@ class _FilteringTool(object):
         return True
 
 
+class SamFile(_FilteringTool):
+    def __init__(self, sam_fp):
+        self.sam_fp = sam_fp
+
+    def annotate(self, R1, R2, pct, frac):
+        mapped = self._get_mapped_reads(self.sam_fp, pct, frac)
+        ids = utils.parse_read_ids(R1)
+        return [(id, True if id in mapped else False) for id in ids]
+
+
 class Bwa(_FilteringTool):
     def __init__(self, index, bwa_fp, num_threads):
         self.index = index
@@ -150,4 +160,5 @@ tools_available = {
     "no_human": None_human,
     "random_human": Random_human,
     "bowtie2": Bowtie,
+    "samfile": SamFile,
 }

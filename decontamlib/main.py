@@ -61,7 +61,11 @@ def human_filter_main(argv=None):
         "--frac", required=False,
         type=float, default=0.6,
         help="Fraction of alignment length Default: 0.6")
-   
+    p.add_argument(
+        "--sam-file", required=False,
+        type=argparse.FileType("r"),
+        help="File of alignments to reference database (SAM format, optional)")
+
     # Output
     p.add_argument(
         "--summary-file", required=True,
@@ -78,6 +82,10 @@ def human_filter_main(argv=None):
     rev_fp = args.reverse_reads.name
     args.forward_reads.close()
     args.reverse_reads.close()
+
+    if args.sam_file is not None:
+        config["method"] = "samfile"
+        config["sam_fp"] = args.sam_file.name
 
     tool = FilteringTool(config)
     if not tool.index_exists():
