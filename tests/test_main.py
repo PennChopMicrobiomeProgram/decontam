@@ -82,6 +82,20 @@ class HumanFilterMainTests(unittest.TestCase):
         for fp in self.output_fps["nonhuman"]:
             self.assertTrue(os.path.exists(fp))
 
+
+    def test_keep_sam_file(self):
+        index_fp = os.path.join(data_dir, "fakehuman")
+        config_file = tempfile.NamedTemporaryFile(suffix=".json")
+        json.dump({"method": "bwa", "index": index_fp}, config_file)
+        config_file.seek(0)
+        self.args.extend(["--config-file", config_file.name])
+
+        self.args.extend(["--keep-sam-file"])
+        human_filter_main(self.args)
+        sam_fp = os.path.join(self.output_dir, "B5_short_R1.sam")
+        self.assertTrue(os.path.exists(sam_fp))
+
+
     def test_all_human(self):
         config_file = tempfile.NamedTemporaryFile(suffix=".json")
         json.dump({"method": "all_human"}, config_file)

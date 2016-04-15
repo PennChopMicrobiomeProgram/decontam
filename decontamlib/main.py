@@ -62,6 +62,9 @@ def human_filter_main(argv=None):
         type=float, default=0.6,
         help="Fraction of alignment length Default: 0.6")
     p.add_argument(
+        "--keep-sam-file", action="store_true",
+        help="Write SAM file to output directory.")
+    p.add_argument(
         "--sam-file", required=False,
         type=argparse.FileType("r"),
         help="File of alignments to reference database (SAM format, optional)")
@@ -86,6 +89,11 @@ def human_filter_main(argv=None):
     if args.sam_file is not None:
         config["method"] = "samfile"
         config["sam_fp"] = args.sam_file.name
+
+    if args.keep_sam_file is True:
+        config["keep_sam_file"] = True
+    else:
+        config["keep_sam_file"] = False
 
     tool = FilteringTool(config)
     if not tool.index_exists():
