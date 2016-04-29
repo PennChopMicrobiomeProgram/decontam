@@ -53,7 +53,7 @@ class FastqSplitter(object):
 def _grouper(iterable, n):
     "Collect data into fixed-length chunks or blocks"
     args = [iter(iterable)] * n
-    return itertools.izip(*args)
+    return zip(*args)
 
 
 def parse_fastq(f):
