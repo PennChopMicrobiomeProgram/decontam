@@ -1,6 +1,12 @@
 import itertools
 import os
 
+# Python 3+ removes izip from itertools; now default behavior
+try:
+    izip = itertools.izip
+except AttributeError:
+    izip = zip
+
 class FastqSplitter(object):
     suffixes_human = {
         True: "_human",
@@ -53,7 +59,7 @@ class FastqSplitter(object):
 def _grouper(iterable, n):
     "Collect data into fixed-length chunks or blocks"
     args = [iter(iterable)] * n
-    return zip(*args)
+    return izip(*args)
 
 
 def parse_fastq(f):
