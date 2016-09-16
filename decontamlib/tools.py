@@ -7,9 +7,8 @@ import re
 import shutil
 import subprocess
 import tempfile
-import utils
 
-
+from decontamlib import utils
 from decontamlib.fastq import FastqSplitter
 from decontamlib.sam import get_mapped_reads
 
@@ -102,7 +101,7 @@ class Bwa(_FilteringTool):
         return subprocess.check_output(cmd, stderr=subprocess.STDOUT)
 
     def index_exists(self):
-        return os.path.exists(self.index + ".amb")
+        return os.path.exists(self.index + ".amb" )
 
 
 class Bowtie(Bwa):

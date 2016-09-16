@@ -1,5 +1,5 @@
 import unittest
-from cStringIO import StringIO
+from io import StringIO
 
 from decontamlib.tools import (
     _FilteringTool, None_human,
