@@ -1,5 +1,8 @@
 import unittest
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from decontamlib.tools import (
     _FilteringTool, None_human,

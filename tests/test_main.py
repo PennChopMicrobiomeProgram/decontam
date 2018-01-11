@@ -12,22 +12,22 @@ from decontamlib.main import (
 data_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data")
 
 
-class ConfigTests(unittest.TestCase):
-    def setUp(self):
-        self.temp_home_dir = tempfile.mkdtemp()
-        self._old_home_dir = os.environ['HOME']
-        os.environ['HOME'] = self.temp_home_dir
+# class ConfigTests(unittest.TestCase):
+#     def setUp(self):
+#         self.temp_home_dir = tempfile.mkdtemp()
+#         self._old_home_dir = os.environ['HOME']
+#         os.environ['HOME'] = self.temp_home_dir
 
-    def tearDown(self):
-        shutil.rmtree(self.temp_home_dir)
-        os.environ['HOME'] = self._old_home_dir
+#     def tearDown(self):
+#         shutil.rmtree(self.temp_home_dir)
+#         os.environ['HOME'] = self._old_home_dir
 
-    def test_default_config_locataion(self):
-        """Config file in user home dir should be read and used"""
-        with open(os.path.join(self.temp_home_dir, ".decontam_human.json"), "w") as f:
-            f.write('{"method": "SOMECRAZYVALUE"}')
-        config = get_config(None, "human")
-        self.assertEqual(config["method"], u"SOMECRAZYVALUE")
+#     def test_default_config_locataion(self):
+#         """Config file in user home dir should be read and used"""
+#         with open(os.path.join(self.temp_home_dir, ".decontam_human.json"), "w") as f:
+#             f.write('{"method": "SOMECRAZYVALUE"}')
+#         config = get_config(None, "human")
+#         self.assertEqual(config["method"], u"SOMECRAZYVALUE")
 
 
 
@@ -61,18 +61,15 @@ class HumanFilterMainTests(unittest.TestCase):
         shutil.rmtree(self.temp_dir)
 
     def test_with_sam_file(self):
-        sam_file = tempfile.NamedTemporaryFile(suffix=".sam")
+        sam_file = tempfile.NamedTemporaryFile(suffix=".sam", mode="w")
         sam_file.write(b5_sam)
         sam_file.seek(0)
         self.args.extend(["--sam-file", sam_file.name])
 
         # Set executable for BWA to "false"
         # This program always returns non-zero exit status
-        config_file = tempfile.NamedTemporaryFile(suffix=".json")
-        config = {"method": "bwa", "bwa_fp": "false"}
-        json.dump(config, config_file)
-        config_file.seek(0)
-        self.args.extend(["--config-file", config_file.name])
+        self.args.extend(["--method", "bwa"])
+        self.args.extend(["--bwa_fp", "false"])
 
         human_filter_main(self.args)
 
@@ -85,10 +82,8 @@ class HumanFilterMainTests(unittest.TestCase):
 
     def test_keep_sam_file(self):
         index_fp = os.path.join(data_dir, "fakehuman")
-        config_file = tempfile.NamedTemporaryFile(suffix=".json")
-        json.dump({"method": "bwa", "index": index_fp}, config_file)
-        config_file.seek(0)
-        self.args.extend(["--config-file", config_file.name])
+        self.args.extend(["--method", "bwa"])
+        self.args.extend(["--index", index_fp])
 
         self.args.extend(["--keep-sam-file"])
         human_filter_main(self.args)
@@ -97,11 +92,7 @@ class HumanFilterMainTests(unittest.TestCase):
 
 
     def test_all_human(self):
-        config_file = tempfile.NamedTemporaryFile(suffix=".json")
-        json.dump({"method": "all_human"}, config_file)
-        config_file.seek(0)
-        self.args.extend(["--config-file", config_file.name])
-
+        self.args.extend(["--method", "all_human"])
         human_filter_main(self.args)
 
         with open(self.summary_fp) as f:
@@ -118,11 +109,7 @@ class HumanFilterMainTests(unittest.TestCase):
 
 
     def test_no_human(self):
-        config_file = tempfile.NamedTemporaryFile(suffix=".json")
-        json.dump({"method": "no_human"}, config_file)
-        config_file.seek(0)
-        self.args.extend(["--config-file", config_file.name])
-
+        self.args.extend(["--method", "no_human"])
         human_filter_main(self.args)
 
         with open(self.summary_fp) as f:
@@ -140,10 +127,8 @@ class HumanFilterMainTests(unittest.TestCase):
 
     def test_bowtie(self):
         index_fp = os.path.join(data_dir, "fakehuman")
-        config_file = tempfile.NamedTemporaryFile(suffix=".json")
-        json.dump({"method": "bowtie2", "index": index_fp}, config_file)
-        config_file.seek(0)
-        self.args.extend(["--config-file", config_file.name])
+        self.args.extend(["--method", "bowtie2"])
+        self.args.extend(["--index", index_fp])
 
         human_filter_main(self.args)
 
@@ -156,10 +141,8 @@ class HumanFilterMainTests(unittest.TestCase):
 
     def test_bwa(self):
         index_fp = os.path.join(data_dir, "fakehuman")
-        config_file = tempfile.NamedTemporaryFile(suffix=".json")
-        json.dump({"method": "bwa", "index": index_fp}, config_file)
-        config_file.seek(0)
-        self.args.extend(["--config-file", config_file.name])
+        self.args.extend(["--method", "bwa"])
+        self.args.extend(["--index", index_fp])
 
         human_filter_main(self.args)
 

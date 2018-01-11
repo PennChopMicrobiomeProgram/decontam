@@ -1,13 +1,16 @@
 import unittest
 import tempfile
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from decontamlib import utils
 
 
 class TestIdExtract(unittest.TestCase):
     def setUp(self):
-        self.fastq = tempfile.NamedTemporaryFile()
+        self.fastq = tempfile.NamedTemporaryFile(mode="w")
         self.fastq.write("@1\nACG\n+\nEEE\n@2\nTTTT\n+\nEEEE\n@3\nANNN\n+\nEEEE\n") 
         self.fastq.seek(0)
 
@@ -37,10 +40,10 @@ class TestAddToolSample(unittest.TestCase):
         self.wide_annotation = utils.add_tool_sample("tool", "sample", self.human_annotation)
 
     def test_number_or_rows(self):
-        self.assertEqual(len(self.human_annotation), len(self.wide_annotation))
+        self.assertEqual(len(self.human_annotation), len(list(self.wide_annotation)))
 
     def test_number_or_columns(self):
-        self.assertEqual(len(self.human_annotation[0]) + 2, len(self.wide_annotation[0]))
+        self.assertEqual(len(self.human_annotation[0]) + 2, len(list(self.wide_annotation)[0]))
 
 
 if __name__ == "__main__":

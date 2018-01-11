@@ -7,7 +7,7 @@ import re
 import shutil
 import subprocess
 import tempfile
-import utils
+import decontamlib.utils as utils
 
 
 from decontamlib.fastq import FastqSplitter
